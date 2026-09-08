@@ -1,0 +1,160 @@
+# Domain Configuration: Philosophy (Wikidata)
+# ==============================================
+# Philosophers, philosophical movements, and intellectual influence networks.
+# Features the wdt:P737 "influenced by" property for tracing intellectual lineage.
+
+domain_name: "Philosophy (Wikidata)"
+description: "Philosophers, schools of thought, and influence relationships"
+keywords:
+  - philosopher
+  - philosophers
+  - philosophy
+  - philosophical
+  - ethics
+  - logic
+  - metaphysics
+  - epistemology
+  - existentialism
+  - stoicism
+  - rationalism
+  - empiricism
+  - school of thought
+  - doctrine
+  - influenced
+  - Socrates
+  - Plato
+  - Aristotle
+  - Kant
+  - Nietzsche
+
+endpoint: "https://query.wikidata.org/sparql"
+
+prefixes: |
+  PREFIX wd: <http://www.wikidata.org/entity/>
+  PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+ontology_hints: |
+  Key Wikidata properties for philosophy:
+  - wdt:P31 = "instance of"
+  - wdt:P106 = "occupation" (e.g. philosopher)
+  - wdt:P737 = "influenced by" (the key influence property)
+  - wdt:P569 = "date of birth"
+  - wdt:P570 = "date of death"
+  - wdt:P19 = "place of birth"
+  - wdt:P27 = "country of citizenship"
+  - wdt:P135 = "movement" (philosophical school)
+  - wdt:P800 = "notable work"
+  - wdt:P184 = "doctoral advisor"
+  - wdt:P185 = "doctoral student"
+  - wdt:P1066 = "student of"
+  
+  Key entities:
+  - wd:Q4964182 = "philosopher"
+  - wd:Q5891 = "philosophy"
+  - wd:Q179805 = "philosophical movement"
+  - wd:Q2915895 = "school of thought"
+
+few_shot_examples:
+  - question: "List 10 philosophers"
+    tag: "Simple"
+    sparql: |
+      SELECT ?philosopher ?philosopherLabel WHERE {
+        ?philosopher wdt:P106 wd:Q4964182 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 10
+
+  - question: "Who influenced Immanuel Kant?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?influence ?influenceLabel WHERE {
+        wd:Q9312 wdt:P737 ?influence .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "Which philosophers did Nietzsche influence?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?philosopher ?philosopherLabel WHERE {
+        ?philosopher wdt:P737 wd:Q9358 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "List German philosophers born in the 19th century"
+    tag: "Filter"
+    sparql: |
+      SELECT ?philosopher ?philosopherLabel ?birth WHERE {
+        ?philosopher wdt:P106 wd:Q4964182 .
+        ?philosopher wdt:P27 wd:Q183 .
+        ?philosopher wdt:P569 ?birth .
+        FILTER(YEAR(?birth) >= 1800 && YEAR(?birth) < 1900)
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "Find philosophers and their notable works"
+    tag: "Join"
+    sparql: |
+      SELECT ?philosopher ?philosopherLabel ?work ?workLabel WHERE {
+        ?philosopher wdt:P106 wd:Q4964182 .
+        ?philosopher wdt:P800 ?work .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "List philosophers who influenced both Kant and Hegel"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?philosopher ?philosopherLabel WHERE {
+        {
+          wd:Q9312 wdt:P737 ?philosopher .
+        }
+        UNION
+        {
+          wd:Q9235 wdt:P737 ?philosopher .
+        }
+
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "Count philosophers by country of citizenship"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?country ?countryLabel (COUNT(?philosopher) AS ?total) WHERE {
+        ?philosopher wdt:P106 wd:Q4964182 .
+        ?philosopher wdt:P27 ?country .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      GROUP BY ?country ?countryLabel
+      ORDER BY DESC(?total)
+      LIMIT 20
+
+  - question: "Which philosophers belonged to the Stoic movement?"
+    tag: "Filter"
+    sparql: |
+      SELECT ?philosopher ?philosopherLabel WHERE {
+        ?philosopher wdt:P106 wd:Q4964182 .
+        ?philosopher wdt:P135 wd:Q48235 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      ORDER BY ?philosopherLabel
+      LIMIT 20
+
+example_questions:
+  - question: "List 10 philosophers"
+    tag: "Simple"
+  - question: "Who influenced Immanuel Kant?"
+    tag: "Lookup"
+  - question: "Which philosophers did Nietzsche influence?"
+    tag: "Lookup"
+  - question: "List German philosophers born in the 19th century"
+    tag: "Filter"
+  - question: "Find philosophers and their notable works"
+    tag: "Join"
+  - question: "List philosophers who influenced both Kant and Hegel"
+    tag: "Join"
+  - question: "Count philosophers by country of citizenship"
+    tag: "Aggregate"
+  - question: "Which philosophers belonged to the Stoic movement?"
+    tag: "Filter"

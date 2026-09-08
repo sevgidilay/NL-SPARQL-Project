@@ -1,0 +1,127 @@
+# Domain Configuration: Books & Literature (DBpedia)
+# ====================================================
+# Books, authors, literary genres, and publishers using DBpedia.
+
+domain_name: "Books (DBpedia)"
+description: "Literature domain using DBpedia: books, authors, genres, and publishers"
+
+endpoint: "https://dbpedia.org/sparql"
+
+prefixes: |
+  PREFIX dbo: <http://dbpedia.org/ontology/>
+  PREFIX dbr: <http://dbpedia.org/resource/>
+  PREFIX dbp: <http://dbpedia.org/property/>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX dct: <http://purl.org/dc/terms/>
+  PREFIX dbc: <http://dbpedia.org/resource/Category:>
+  PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+ontology_hints: |
+  Key DBpedia classes and properties for books:
+  - dbo:Book = "a book"
+  - dbo:Novel = "a novel"
+  - dbo:Writer = "a writer or author"
+  - dbo:author = "author of the book"
+  - dbo:publisher = "publisher"
+  - dbo:genre = "literary genre"
+  - dbo:literaryGenre = "literary genre (alternative)"
+  - dbo:numberOfPages = "page count"
+  - dbo:isbn = "ISBN number"
+  - dbo:publicationDate = "date of publication"
+  - dbo:country = "country of origin"
+  - dbo:language = "language the book is written in"
+  - dbo:influencedBy = "influenced by another author or work"
+  - dbo:notableWork = "notable work by an author"
+  - rdfs:label = "name"
+
+  Important: Always filter by language with FILTER(LANG(?name) = "en").
+  Use DISTINCT to avoid duplicate results.
+  DBpedia uses dbr: for specific entities, e.g. dbr:George_Orwell.
+
+few_shot_examples:
+  # Previously used dbo:WrittenWork + FILTER(CONTAINS(LCASE(STR(?category)), "novel")),
+  # but ?category was never bound in that query so the FILTER always evaluated against
+  # an unbound variable, returning 0 rows. dbo:Novel is the correct DBpedia class for
+  # novels and produces results directly without needing a subject/category join.
+
+##Please don't change it, dbo:Novel gives novel types not actual books! -Dilay
+  
+  - question: "List 10 novels"
+    tag: "Simple"
+    sparql: |
+      SELECT DISTINCT ?book ?name WHERE {
+        ?book a dbo:WrittenWork .
+        ?book dbo:author ?author .
+        ?book rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 10
+
+  - question: "List books written by George Orwell"
+    tag: "Lookup"
+    sparql: |
+      SELECT DISTINCT ?book ?name WHERE {
+        ?book a dbo:Book .
+        ?book dbo:author dbr:George_Orwell .
+        ?book rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+
+  - question: "Who wrote 1984?"
+    tag: "Lookup"
+    sparql: |
+      SELECT DISTINCT ?author ?name WHERE {
+        dbr:Nineteen_Eighty-Four dbo:author ?author .
+        ?author rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+
+  - question: "List science fiction novels"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?book ?name WHERE {
+        ?book a dbo:WrittenWork .
+        ?book dbo:genre dbr:Science_fiction .
+        ?book rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List authors and their notable works"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?author ?authorName ?work ?workName WHERE {
+        ?author a dbo:Writer .
+        ?author dbo:notableWork ?work .
+        ?author rdfs:label ?authorName .
+        ?work rdfs:label ?workName .
+        FILTER(LANG(?authorName) = "en")
+        FILTER(LANG(?workName) = "en")
+      }
+      LIMIT 20
+
+  - question: "List British authors"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?author ?name WHERE {
+        ?author a dbo:Writer .
+        ?author dbo:nationality dbr:United_Kingdom .
+        ?author rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+example_questions:
+  - question: "List 10 novels"
+    tag: "Simple"
+  - question: "List books written by George Orwell"
+    tag: "Lookup"
+  - question: "Who wrote 1984?"
+    tag: "Lookup"
+  - question: "List science fiction novels"
+    tag: "Filter"
+  - question: "List authors and their notable works"
+    tag: "Join"
+  - question: "List British authors"
+    tag: "Filter"

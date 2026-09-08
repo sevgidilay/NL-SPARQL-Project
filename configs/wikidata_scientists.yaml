@@ -1,0 +1,185 @@
+# Domain Configuration: Scientists & Nobel Prizes (Wikidata)
+# =============================================================
+# Scientists, researchers, Nobel Prize winners, discoveries, and institutions.
+
+domain_name: "Scientists & Nobel Prizes (Wikidata)"
+description: "Science domain: researchers, Nobel Prize laureates, discoveries, and institutions"
+keywords:
+  - scientist
+  - scientists
+  - researcher
+  - researchers
+  - nobel
+  - physicist
+  - physicists
+  - chemist
+  - chemists
+  - biologist
+  - biologists
+  - astronomer
+  - astronomers
+  - mathematician
+  - mathematicians
+  - discovery
+  - discoveries
+  - institution
+  - laboratory
+  - CERN
+
+endpoint: "https://query.wikidata.org/sparql"
+
+prefixes: |
+  PREFIX wd: <http://www.wikidata.org/entity/>
+  PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+ontology_hints: |
+  Key Wikidata properties for scientists and Nobel Prizes:
+  - wdt:P31 = "instance of"
+  - wdt:P106 = "occupation"
+  - wdt:P101 = "field of work"
+  - wdt:P166 = "award received"
+  - wdt:P108 = "employer / institution"
+  - wdt:P184 = "doctoral advisor"
+  - wdt:P185 = "doctoral student"
+  - wdt:P569 = "date of birth"
+  - wdt:P570 = "date of death"
+  - wdt:P27 = "country of citizenship"
+  - wdt:P19 = "place of birth"
+  - wdt:P800 = "notable work / discovery"
+
+  Key entities:
+  - wd:Q901 = "scientist"
+  - wd:Q169470 = "physicist"
+  - wd:Q593644 = "chemist"
+  - wd:Q2374149 = "biologist"
+  - wd:Q7191 = "Nobel Prize"
+  - wd:Q38104 = "Nobel Prize in Physics"
+  - wd:Q44585 = "Nobel Prize in Chemistry"
+  - wd:Q43380 = "Nobel Prize in Physiology or Medicine"
+  - wd:Q35637 = "Nobel Peace Prize"
+  - wd:Q37922 = "Nobel Prize in Literature"
+  - wd:Q47170 = "Nobel Memorial Prize in Economic Sciences"
+  - wd:Q68 = "computer"
+
+few_shot_examples:
+  - question: "List 10 scientists"
+    tag: "Simple"
+    sparql: |
+      SELECT ?scientist ?scientistLabel WHERE {
+        ?scientist wdt:P106 wd:Q901 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 10
+
+  - question: "List Nobel Prize winners in Physics"
+    tag: "Filter"
+    sparql: |
+      SELECT ?laureate ?laureateLabel ?year WHERE {
+        ?laureate wdt:P166 wd:Q38104 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "List female Nobel Prize laureates"
+    tag: "Filter"
+    sparql: |
+      SELECT ?laureate ?laureateLabel ?award ?awardLabel WHERE {
+        ?laureate wdt:P166 ?award .
+        ?award wdt:P279* wd:Q7191 .
+        ?laureate wdt:P21 wd:Q6581072 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "List physicists and their notable works"
+    tag: "Join"
+    sparql: |
+      SELECT ?physicist ?physicistLabel ?work ?workLabel WHERE {
+        ?physicist wdt:P106 wd:Q169470 .
+        ?physicist wdt:P800 ?work .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "List scientists who were doctoral students of Albert Einstein"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?student ?studentLabel WHERE {
+        ?student wdt:P184 wd:Q937 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "List Nobel Prize winners from Germany"
+    tag: "Filter"
+    sparql: |
+      SELECT ?laureate ?laureateLabel ?award ?awardLabel WHERE {
+        ?laureate wdt:P166 ?award .
+        ?award wdt:P279* wd:Q7191 .
+        ?laureate wdt:P27 wd:Q183 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "List scientists who worked at CERN"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?scientist ?scientistLabel WHERE {
+        ?scientist wdt:P108 wd:Q42944 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "List scientists who are not physicists"
+    tag: "Filter"
+    sparql: |
+      SELECT ?scientist ?scientistLabel WHERE {
+        ?scientist wdt:P106 wd:Q901 .
+        ?scientist wdt:P31 wd:Q5 .
+        MINUS { ?scientist wdt:P106 wd:Q169470 . }
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "List chemists born in the 20th century and their fields of work"
+    tag: "Filter"
+    sparql: |
+      SELECT ?chemist ?chemistLabel ?field ?fieldLabel ?birth WHERE {
+        ?chemist wdt:P106 wd:Q593644 .
+        ?chemist wdt:P569 ?birth .
+        OPTIONAL { ?chemist wdt:P101 ?field . }
+        FILTER(YEAR(?birth) >= 1900 && YEAR(?birth) < 2000)
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "Count Nobel Prize winners by country"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?country ?countryLabel (COUNT(?laureate) AS ?count) WHERE {
+        ?laureate wdt:P166 ?award .
+        ?award wdt:P279* wd:Q7191 .
+        ?laureate wdt:P27 ?country .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      GROUP BY ?country ?countryLabel
+      ORDER BY DESC(?count)
+      LIMIT 20
+
+example_questions:
+  - question: "List 10 scientists"
+    tag: "Simple"
+  - question: "List Nobel Prize winners in Physics"
+    tag: "Filter"
+  - question: "List female Nobel Prize laureates"
+    tag: "Filter"
+  - question: "List scientists who were doctoral students of Albert Einstein"
+    tag: "Lookup"
+  - question: "List scientists who worked at CERN"
+    tag: "Lookup"
+  - question: "List physicists and their notable works"
+    tag: "Join"
+  - question: "List Nobel Prize winners from Germany"
+    tag: "Filter"
+  - question: "Count Nobel Prize winners by country"
+    tag: "Aggregate"

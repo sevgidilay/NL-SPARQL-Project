@@ -1,0 +1,607 @@
+==============================================================================
+  TV Shows (DBpedia) — Query Accuracy Log
+  Domain  : TV Shows (DBpedia)
+  Endpoint: https://dbpedia.org/sparql
+  Run at  : 2026-05-16 13:35:45 UTC
+==============================================================================
+
+SUMMARY
+------------------------------------------------------------------------------
+  Total queries  : 38
+  PASS  (>= 1 row): 38
+  EMPTY (0 rows)  : 0
+  FAIL  (error)   : 0
+  SKIP  (no SPARQL): 0
+  Accuracy        : 100.0%  (38/38 queries returned results)
+  Avg response    : 1.84s
+
+DETAIL
+------------------------------------------------------------------------------
+
+[PASS ]  #01  [Simple]  List 10 TV shows
+  Rows: 10   Time: 6.52s
+  Sample output:
+    { show='http://dbpedia.org/resource/Canadian_Fisherman', name='Canadian Fisherman' }
+    { show='http://dbpedia.org/resource/Guyana_Tragedy:_The_Story_of_Jim', name='Guyana Tragedy: The Story of Jim Jones' }
+    { show='http://dbpedia.org/resource/Platinum_Hit', name='Platinum Hit' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 10
+
+[PASS ]  #02  [Filter]  List 20 animated TV shows
+  Rows: 20   Time: 0.14s
+  Sample output:
+    { show='http://dbpedia.org/resource/A_Charlie_Brown_Celebration', name='A Charlie Brown Celebration' }
+    { show='http://dbpedia.org/resource/Galtar_and_the_Golden_Lance', name='Galtar and the Golden Lance' }
+    { show='http://dbpedia.org/resource/Bad_Dog_(TV_series)', name='Bad Dog (TV series)' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:genre dbr:Animation .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #03  [Lookup]  Who created Breaking Bad?
+  Rows: 1   Time: 0.10s
+  Sample output:
+    { creator='http://dbpedia.org/resource/Vince_Gilligan', creatorName='Vince Gilligan' }
+  SPARQL:
+    SELECT ?creator ?creatorName WHERE {
+      dbr:Breaking_Bad dbo:creator ?creator .
+      ?creator rdfs:label ?creatorName .
+      FILTER(LANG(?creatorName) = "en")
+    }
+
+[PASS ]  #04  [Lookup]  List actors who starred in Friends
+  Rows: 6   Time: 0.11s
+  Sample output:
+    { actor='http://dbpedia.org/resource/Lisa_Kudrow', actorName='Lisa Kudrow' }
+    { actor='http://dbpedia.org/resource/Matthew_Perry', actorName='Matthew Perry' }
+    { actor='http://dbpedia.org/resource/Courteney_Cox', actorName='Courteney Cox' }
+  SPARQL:
+    SELECT ?actor ?actorName WHERE {
+      dbr:Friends dbo:starring ?actor .
+      ?actor rdfs:label ?actorName .
+      FILTER(LANG(?actorName) = "en")
+    }
+
+[PASS ]  #05  [Lookup]  List episodes of Game of Thrones
+  Rows: 21   Time: 0.36s
+  Sample output:
+    { episode='http://dbpedia.org/resource/The_Bells_(Game_of_Thrones)', name='The Bells (Game of Thrones)' }
+    { episode='http://dbpedia.org/resource/The_Long_Night_(Game_of_Thrones)', name='The Long Night (Game of Thrones)' }
+    { episode='http://dbpedia.org/resource/The_Winds_of_Winter_(Game_of_Thr', name='The Winds of Winter (Game of Thrones)' }
+  SPARQL:
+    SELECT DISTINCT ?episode ?name WHERE {
+      ?episode a dbo:TelevisionEpisode .
+      ?episode rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+      FILTER(CONTAINS(?name, "Game of Thrones"))
+    }
+    LIMIT 30
+
+[PASS ]  #06  [Filter]  List TV shows on HBO
+  Rows: 20   Time: 0.16s
+  Sample output:
+    { show='http://dbpedia.org/resource/Lone_Hero', name='Lone Hero' }
+    { show='http://dbpedia.org/resource/Without_Warning:_The_James_Brady', name='Without Warning: The James Brady Story' }
+    { show='http://dbpedia.org/resource/Stalin_(1992_film)', name='Stalin (1992 film)' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network dbr:HBO .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #07  [Filter]  Find drama TV shows
+  Rows: 20   Time: 0.19s
+  Sample output:
+    { show='http://dbpedia.org/resource/Others_(TV_series)', name='Others (TV series)' }
+    { show='http://dbpedia.org/resource/Bodhuboron', name='Bodhuboron' }
+    { show='http://dbpedia.org/resource/My_Unfamiliar_Family', name='My Unfamiliar Family' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:genre dbr:Drama .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #08  [Filter]  List 15 thriller series
+  Rows: 15   Time: 0.18s
+  Sample output:
+    { show='http://dbpedia.org/resource/The_Whispers_(TV_series)', name='The Whispers (TV series)' }
+    { show='http://dbpedia.org/resource/Blood_(South_Korean_TV_series)', name='Blood (South Korean TV series)' }
+    { show='http://dbpedia.org/resource/Amber_(TV_series)', name='Amber (TV series)' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:genre <http://dbpedia.org/resource/Thriller_(genre)> .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 15
+
+[PASS ]  #09  [Filter]  List TV shows from the United Kingdom
+  Rows: 20   Time: 0.17s
+  Sample output:
+    { show='http://dbpedia.org/resource/Drama_Queens_(TV_series)', name='Drama Queens (TV series)' }
+    { show='http://dbpedia.org/resource/Elizabeth_R:_A_Year_in_the_Life_', name='Elizabeth R: A Year in the Life of the Queen' }
+    { show='http://dbpedia.org/resource/Marriage_(TV_series)', name='Marriage (TV series)' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:country dbr:United_Kingdom .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #10  [Filter]  List TV shows with more than 200 episodes
+  Rows: 20   Time: 0.36s
+  Sample output:
+    { show='http://dbpedia.org/resource/Battlestars_(game_show)', name='Battlestars (game show)', episodes='651983' }
+    { show='http://dbpedia.org/resource/The_Young_Doctors', name='The Young Doctors', episodes='139630' }
+    { show='http://dbpedia.org/resource/SportsCenter', name='SportsCenter', episodes='60000' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name ?episodes WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:numberOfEpisodes ?episodes .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+      FILTER(?episodes > 200)
+    }
+    ORDER BY DESC(?episodes)
+    LIMIT 20
+
+[PASS ]  #11  [Join]  List TV shows with their creators and number of episodes
+  Rows: 20   Time: 2.35s
+  Sample output:
+    { show='http://dbpedia.org/resource/St._Elsewhere', showName='St. Elsewhere', creatorName='John Falsey' }
+    { show='http://dbpedia.org/resource/Star_Wars:_Tales_of_the_Empire', showName='Star Wars: Tales of the Empire', creatorName='Dave Filoni' }
+    { show='http://dbpedia.org/resource/Lazarus_(upcoming_TV_series)', showName='Lazarus (upcoming TV series)', creatorName='Danny Brocklehurst' }
+  SPARQL:
+    SELECT DISTINCT ?show ?showName ?creatorName ?episodes WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:creator ?creator .
+      ?show rdfs:label ?showName .
+      ?creator rdfs:label ?creatorName .
+      OPTIONAL { ?show dbo:numberOfEpisodes ?episodes . }
+      FILTER(LANG(?showName) = "en")
+      FILTER(LANG(?creatorName) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #12  [Lookup]  Which TV shows did Bryan Cranston appear in?
+  Rows: 12   Time: 0.13s
+  Sample output:
+    { show='http://dbpedia.org/resource/Julia_Louis-Dreyfus:_The_Kennedy', showName='Julia Louis-Dreyfus: The Kennedy Center Mark Twain Prize for' }
+    { show='http://dbpedia.org/resource/Breaking_Bad', showName='Breaking Bad' }
+    { show='http://dbpedia.org/resource/Your_Honor_(American_TV_series)', showName='Your Honor (American TV series)' }
+  SPARQL:
+    SELECT DISTINCT ?show ?showName WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:starring dbr:Bryan_Cranston .
+      ?show rdfs:label ?showName .
+      FILTER(LANG(?showName) = "en")
+    }
+
+[PASS ]  #13  [Join]  List TV shows with their network and genre
+  Rows: 20   Time: 17.08s
+  Sample output:
+    { showName='Blue SWAT', networkName='TV Asahi', genreName='Mystery fiction' }
+    { showName='Ultraman Ace', networkName='Japan News Network', genreName='Science fiction' }
+    { showName='Hilda Furacão', networkName='TV Globo', genreName='Romance film' }
+  SPARQL:
+    SELECT DISTINCT ?showName ?networkName ?genreName WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network ?network .
+      ?show dbo:genre ?genre .
+      ?show rdfs:label ?showName .
+      ?network rdfs:label ?networkName .
+      ?genre rdfs:label ?genreName .
+      FILTER(LANG(?showName) = "en")
+      FILTER(LANG(?networkName) = "en")
+      FILTER(LANG(?genreName) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #14  [Aggregate]  Count TV shows by network
+  Rows: 15   Time: 6.37s
+  Sample output:
+    { networkName='American Broadcasting Company', showCount='1895' }
+    { networkName='NBC', showCount='1832' }
+    { networkName='CBS', showCount='1820' }
+  SPARQL:
+    SELECT ?networkName (COUNT(DISTINCT ?show) AS ?showCount) WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network ?network .
+      ?network rdfs:label ?networkName .
+      FILTER(LANG(?networkName) = "en")
+    }
+    GROUP BY ?networkName
+    ORDER BY DESC(?showCount)
+    LIMIT 15
+
+[PASS ]  #15  [Aggregate]  Count TV shows by genre
+  Rows: 15   Time: 9.39s
+  Sample output:
+    { genreName='Drama (film and television)', showCount='3439' }
+    { genreName='Reality television', showCount='2947' }
+    { genreName='Drama', showCount='2533' }
+  SPARQL:
+    SELECT ?genreName (COUNT(DISTINCT ?show) AS ?showCount) WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:genre ?genre .
+      ?genre rdfs:label ?genreName .
+      FILTER(LANG(?genreName) = "en")
+    }
+    GROUP BY ?genreName
+    ORDER BY DESC(?showCount)
+    LIMIT 15
+
+[PASS ]  #16  [Filter]  List comedy TV shows
+  Rows: 20   Time: 0.21s
+  Sample output:
+    { show='http://dbpedia.org/resource/Familia_moderna', name='Familia moderna' }
+    { show='http://dbpedia.org/resource/Bestsellers_(web_series)', name='Bestsellers (web series)' }
+    { show='http://dbpedia.org/resource/Laff-A-Lympics', name='Laff-A-Lympics' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:genre dbr:Comedy .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #17  [Filter]  List reality TV shows
+  Rows: 20   Time: 0.24s
+  Sample output:
+    { show='http://dbpedia.org/resource/SummerBreak', name='SummerBreak' }
+    { show="http://dbpedia.org/resource/Kingin'_with_Tyga", name="Kingin' with Tyga" }
+    { show="http://dbpedia.org/resource/Lizzo's_Watch_Out_for_the_Big_Gr", name="Lizzo's Watch Out for the Big Grrrls" }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:genre dbr:Reality_television .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #18  [Filter]  List science fiction TV shows
+  Rows: 20   Time: 0.15s
+  Sample output:
+    { show='http://dbpedia.org/resource/Raised_by_Wolves_(American_TV_se', name='Raised by Wolves (American TV series)' }
+    { show='http://dbpedia.org/resource/Scavengers_Reign', name='Scavengers Reign' }
+    { show='http://dbpedia.org/resource/Black_Lightning_(TV_series)', name='Black Lightning (TV series)' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:genre dbr:Science_fiction_on_television .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #19  [Filter]  List TV shows from the United States
+  Rows: 20   Time: 0.67s
+  Sample output:
+    { show='http://dbpedia.org/resource/Xiaolin_Showdown', name='List of Xiaolin Showdown characters' }
+    { show='http://dbpedia.org/resource/National_Bingo_Night_(American_g', name='National Bingo Night (American game show)' }
+    { show='http://dbpedia.org/resource/Stone_Protectors', name='Stone Protectors' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:country dbr:United_States .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #20  [Filter]  List TV shows on Netflix
+  Rows: 20   Time: 0.18s
+  Sample output:
+    { show='http://dbpedia.org/resource/The_Snitch_Cartel:_Origins', name='The Snitch Cartel: Origins' }
+    { show='http://dbpedia.org/resource/Inside_Job_(2021_TV_series)', name='Inside Job (2021 TV series)' }
+    { show='http://dbpedia.org/resource/The_Chef_Show', name='The Chef Show' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network dbr:Netflix .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #21  [Filter]  List TV shows on AMC
+  Rows: 20   Time: 0.13s
+  Sample output:
+    { show='http://dbpedia.org/resource/Humans_(TV_series)', name='Humans (TV series)' }
+    { show='http://dbpedia.org/resource/Hollywood_High_(2003_film)', name='Hollywood High (2003 film)' }
+    { show='http://dbpedia.org/resource/Celebrity_Charades', name='Celebrity Charades' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network <http://dbpedia.org/resource/AMC_(TV_channel)> .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #22  [Lookup]  List actors who starred in The Sopranos
+  Rows: 9   Time: 0.14s
+  Sample output:
+    { actor='http://dbpedia.org/resource/Lorraine_Bracco', actorName='Lorraine Bracco' }
+    { actor='http://dbpedia.org/resource/Jamie-Lynn_Sigler', actorName='Jamie-Lynn Sigler' }
+    { actor='http://dbpedia.org/resource/Dominic_Chianese', actorName='Dominic Chianese' }
+  SPARQL:
+    SELECT ?actor ?actorName WHERE {
+      dbr:The_Sopranos dbo:starring ?actor .
+      ?actor rdfs:label ?actorName .
+      FILTER(LANG(?actorName) = "en")
+    }
+
+[PASS ]  #23  [Lookup]  What network and genre does The Simpsons belong to?
+  Rows: 4   Time: 0.12s
+  Sample output:
+    { networkName='Disney+', genreName='Animated sitcom' }
+    { networkName='Fox Broadcasting Company', genreName='Animated sitcom' }
+    { networkName='Disney+', genreName='Satire' }
+  SPARQL:
+    SELECT ?networkName ?genreName WHERE {
+      dbr:The_Simpsons dbo:network ?network .
+      dbr:The_Simpsons dbo:genre ?genre .
+      ?network rdfs:label ?networkName .
+      ?genre rdfs:label ?genreName .
+      FILTER(LANG(?networkName) = "en")
+      FILTER(LANG(?genreName) = "en")
+    }
+
+[PASS ]  #24  [Lookup]  Who created Game of Thrones?
+  Rows: 2   Time: 0.10s
+  Sample output:
+    { creator='http://dbpedia.org/resource/D._B._Weiss', creatorName='D. B. Weiss' }
+    { creator='http://dbpedia.org/resource/David_Benioff', creatorName='David Benioff' }
+  SPARQL:
+    SELECT ?creator ?creatorName WHERE {
+      dbr:Game_of_Thrones dbo:creator ?creator .
+      ?creator rdfs:label ?creatorName .
+      FILTER(LANG(?creatorName) = "en")
+    }
+
+[PASS ]  #25  [Filter]  List TV shows with fewer than 30 episodes
+  Rows: 20   Time: 0.50s
+  Sample output:
+    { show='http://dbpedia.org/resource/How_I_Met_Your_Dad', name='How I Met Your Dad', episodes='1' }
+    { show='http://dbpedia.org/resource/Balas_Dendam_Istri_yang_Tak_Dian', name='Balas Dendam Istri yang Tak Dianggap', episodes='1' }
+    { show='http://dbpedia.org/resource/Saturday_in_America_with_Kayleig', name='Saturday in America with Kayleigh McEnany', episodes='1' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name ?episodes WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:numberOfEpisodes ?episodes .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+      FILTER(?episodes > 0 && ?episodes < 30)
+    }
+    ORDER BY ASC(?episodes)
+    LIMIT 20
+
+[PASS ]  #26  [Aggregate]  Count TV shows by country of origin
+  Rows: 15   Time: 4.01s
+  Sample output:
+    { countryName='United States', showCount='1143' }
+    { countryName='United Kingdom', showCount='949' }
+    { countryName='Australia', showCount='635' }
+  SPARQL:
+    SELECT ?countryName (COUNT(DISTINCT ?show) AS ?showCount) WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:country ?country .
+      ?country rdfs:label ?countryName .
+      FILTER(LANG(?countryName) = "en")
+    }
+    GROUP BY ?countryName
+    ORDER BY DESC(?showCount)
+    LIMIT 15
+
+[PASS ]  #27  [Join]  List TV shows with their network and number of episodes
+  Rows: 20   Time: 5.01s
+  Sample output:
+    { showName="Reporter's Notebook", networkName='GTV (Philippine TV network)' }
+    { showName='Max Knight: Ultra Spy', networkName='UPN' }
+    { showName='WhatUwant', networkName='Channel V Australia', episodes='1500' }
+  SPARQL:
+    SELECT DISTINCT ?showName ?networkName ?episodes WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network ?network .
+      ?show rdfs:label ?showName .
+      ?network rdfs:label ?networkName .
+      OPTIONAL { ?show dbo:numberOfEpisodes ?episodes . }
+      FILTER(LANG(?showName) = "en")
+      FILTER(LANG(?networkName) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #28  [Join]  List TV shows with their country and genre
+  Rows: 20   Time: 7.81s
+  Sample output:
+    { showName='Criminal Minds', countryName='United States', genreName='Crime drama' }
+    { showName='Japanizi: Going, Going, Gong!', countryName='Canada', genreName='Game show' }
+    { showName='My Fair Princess', countryName='Taiwan', genreName='Wuxia' }
+  SPARQL:
+    SELECT DISTINCT ?showName ?countryName ?genreName WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:country ?country .
+      ?show dbo:genre ?genre .
+      ?show rdfs:label ?showName .
+      ?country rdfs:label ?countryName .
+      ?genre rdfs:label ?genreName .
+      FILTER(LANG(?showName) = "en")
+      FILTER(LANG(?countryName) = "en")
+      FILTER(LANG(?genreName) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #29  [Filter]  List TV shows on BBC
+  Rows: 20   Time: 0.52s
+  Sample output:
+    { show='http://dbpedia.org/resource/Monitor_(British_TV_programme)', name='Monitor (British TV programme)' }
+    { show='http://dbpedia.org/resource/Sunday_Night_Theatre', name='Sunday Night Theatre' }
+    { show='http://dbpedia.org/resource/The_Adventures_of_Tom_Sawyer_(19', name='The Adventures of Tom Sawyer (1960 TV series)' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network dbr:BBC .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #30  [Filter]  List TV shows on CBS
+  Rows: 20   Time: 0.24s
+  Sample output:
+    { show='http://dbpedia.org/resource/A_Piano_for_Mrs._Cimino', name='A Piano for Mrs. Cimino' }
+    { show="http://dbpedia.org/resource/She's_a_Good_Skate,_Charlie_Brow", name="She's a Good Skate, Charlie Brown" }
+    { show="http://dbpedia.org/resource/Bill_&_Ted's_Excellent_Adventure", name="Bill & Ted's Excellent Adventures (1990 TV series)" }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network dbr:CBS .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #31  [Filter]  List TV shows on Fox
+  Rows: 20   Time: 0.16s
+  Sample output:
+    { show='http://dbpedia.org/resource/Almost_Family', name='Almost Family' }
+    { show='http://dbpedia.org/resource/The_Four:_Battle_for_Stardom', name='The Four: Battle for Stardom' }
+    { show='http://dbpedia.org/resource/Graduate_Together:_America_Honor', name='Graduate Together: America Honors the High School Class of 2' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network dbr:Fox_Broadcasting_Company .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #32  [Filter]  List horror TV shows
+  Rows: 20   Time: 0.16s
+  Sample output:
+    { show='http://dbpedia.org/resource/Spooky_Valentine', name='Spooky Valentine' }
+    { show='http://dbpedia.org/resource/The_Lair', name='The Lair' }
+    { show='http://dbpedia.org/resource/The_Other_Black_Girl_(TV_series)', name='The Other Black Girl (TV series)' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:genre dbr:Horror_fiction .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #33  [Filter]  List crime fiction TV shows
+  Rows: 20   Time: 0.14s
+  Sample output:
+    { show="http://dbpedia.org/resource/Miss_Fisher's_Murder_Mysteries", name="Miss Fisher's Murder Mysteries" }
+    { show='http://dbpedia.org/resource/CID_3278', name='CID 3278' }
+    { show='http://dbpedia.org/resource/Trailer_Park_Boys:_Jail', name='Trailer Park Boys: Jail' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:genre dbr:Crime_fiction .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #34  [Filter]  List TV shows from Canada
+  Rows: 20   Time: 0.17s
+  Sample output:
+    { show='http://dbpedia.org/resource/Call_Me_Mother', name='Call Me Mother' }
+    { show='http://dbpedia.org/resource/Anthony_Ant', name='Anthony Ant' }
+    { show='http://dbpedia.org/resource/The_Hound_of_London', name='The Hound of London' }
+  SPARQL:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:country dbr:Canada .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #35  [Lookup]  Who created Grey's Anatomy?
+  Rows: 1   Time: 0.11s
+  Sample output:
+    { creator='http://dbpedia.org/resource/Shonda_Rhimes', creatorName='Shonda Rhimes' }
+  SPARQL:
+    SELECT ?creator ?creatorName WHERE {
+      ?show rdfs:label "Grey's Anatomy"@en .
+      ?show dbo:creator ?creator .
+      ?creator rdfs:label ?creatorName .
+      FILTER(LANG(?creatorName) = "en")
+    }
+
+[PASS ]  #36  [Lookup]  What network airs Stranger Things?
+  Rows: 1   Time: 0.12s
+  Sample output:
+    { network='http://dbpedia.org/resource/Netflix', networkName='Netflix' }
+  SPARQL:
+    SELECT ?network ?networkName WHERE {
+      dbr:Stranger_Things dbo:network ?network .
+      ?network rdfs:label ?networkName .
+      FILTER(LANG(?networkName) = "en")
+    }
+
+[PASS ]  #37  [Join]  List TV shows with their creators and country of origin
+  Rows: 20   Time: 3.49s
+  Sample output:
+    { showName='One News (TV channel)', creatorName='Cignal TV', countryName='Philippines' }
+    { showName='Strip Search (web series)', creatorName='Penny Arcade', countryName='United States' }
+    { showName='El Wa3ra', creatorName='Rym Ghezali', countryName='Algeria' }
+  SPARQL:
+    SELECT DISTINCT ?showName ?creatorName ?countryName WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:creator ?creator .
+      ?show dbo:country ?country .
+      ?show rdfs:label ?showName .
+      ?creator rdfs:label ?creatorName .
+      ?country rdfs:label ?countryName .
+      FILTER(LANG(?showName) = "en")
+      FILTER(LANG(?creatorName) = "en")
+      FILTER(LANG(?countryName) = "en")
+    }
+    LIMIT 20
+
+[PASS ]  #38  [Aggregate]  Count TV shows by creator
+  Rows: 15   Time: 1.74s
+  Sample output:
+    { creatorName='ABS-CBN Studios', showCount='166' }
+    { creatorName='John de Mol Jr.', showCount='136' }
+    { creatorName='Simon Cowell', showCount='110' }
+  SPARQL:
+    SELECT ?creatorName (COUNT(DISTINCT ?show) AS ?showCount) WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:creator ?creator .
+      ?creator rdfs:label ?creatorName .
+      FILTER(LANG(?creatorName) = "en")
+    }
+    GROUP BY ?creatorName
+    ORDER BY DESC(?showCount)
+    LIMIT 15
+
+==============================================================================
+  End of log — 2026-05-16 13:35:45 UTC
+==============================================================================

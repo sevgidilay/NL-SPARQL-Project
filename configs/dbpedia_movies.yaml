@@ -1,0 +1,335 @@
+# Domain Configuration: Movies (DBpedia)
+# ========================================
+# This config uses DBpedia as the endpoint.
+# DBpedia uses ontology properties such as dbo:director and resource URIs such as dbr:Inception.
+
+domain_name: "Movies (DBpedia)"
+description: "Film domain using DBpedia: movies, directors, actors, genres, release dates, box office data, and adaptations"
+
+keywords:
+  - movie
+  - movies
+  - film
+  - films
+  - director
+  - directors
+  - actor
+  - actors
+  - actress
+  - cinema
+  - screenplay
+  - box office
+  - gross
+  - budget
+  - Oscar
+  - Academy Award
+  - animated
+  - animation
+  - documentary
+  - horror
+  - scary
+  - comedy
+  - romance
+  - action
+  - adventure
+  - drama
+  - thriller
+  - science fiction
+  - sci-fi
+  - fantasy
+  - crime
+  - mystery
+  - musical
+  - western
+  - sequel
+  - franchise
+  - adaptation
+  - based on
+  - book adaptation
+  - Hollywood
+  - Cannes
+
+endpoint: "https://dbpedia.org/sparql"
+
+prefixes: |
+  PREFIX dbo: <http://dbpedia.org/ontology/>
+  PREFIX dbr: <http://dbpedia.org/resource/>
+  PREFIX dbp: <http://dbpedia.org/property/>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+ontology_hints: |
+  Key DBpedia classes and properties for movies:
+  - dbo:Film = the class for movies
+  - dbo:director = director of the film
+  - dbo:starring = actors who starred in the film
+  - dbo:producer = producer
+  - dbo:writer = screenwriter
+  - dbo:musicComposer = music composer
+  - dbo:releaseDate = release date
+  - dbo:runtime = runtime in SECONDS (a number; divide by 60 for minutes)
+  - dbo:budget = budget (sparsely populated; many films have no value)
+  - dbo:gross = box office gross (sparsely populated; many films have no value)
+  - dbo:genre = film genre
+  - dbo:language = language of the film
+  - dbo:country = country of origin
+  - dbo:basedOn = original work the film is based on
+  - dbo:WrittenWork = written work (book, novel, story, play, etc.)
+  - dbo:abstract = the encyclopedic summary text of the entity
+  - rdfs:label = human-readable name
+
+  Important DBpedia query rules:
+  - This domain uses DBpedia, not Wikidata.
+  - Never use SERVICE wikibase:label in DBpedia queries.
+  - Never use bd:serviceParam in DBpedia queries.
+  - For labels, always bind them explicitly with rdfs:label.
+  - Always filter English labels with FILTER(LANG(?name) = "en").
+  - DBpedia uses URIs like dbr:Inception and dbr:Steven_Spielberg for specific entities.
+  - Use DISTINCT to avoid duplicate results.
+
+  Numeric ordering and ranking:
+  - dbo:gross, dbo:budget and dbo:runtime are stored as plain literals and must
+    be cast before they are compared or sorted, otherwise SPARQL sorts them as
+    text (so "5.0E7" wrongly outranks "9000000").
+  - For any "highest", "lowest", "top N", "most expensive" or "longest" question,
+    cast the value: ORDER BY DESC(xsd:double(?gross)) or ASC(xsd:double(?budget)).
+  - Do NOT add filters such as FILTER(!BOUND(?gross) || ?gross != 0). If the
+    triple ?film dbo:gross ?gross is in the WHERE block the value is already
+    bound; such filters are nonsensical and must not be generated.
+  - Note for the user-facing answer: DBpedia's dbo:gross and dbo:budget are only
+    populated for a small, uneven subset of films, so a "top grossing" result
+    reflects only the films that happen to carry that property, not the true
+    global box-office ranking.
+
+  Specific-entity lookups (exact, complete answers):
+  - When the question names a specific director, actor, writer or film
+    (e.g. "movies directed by Steven Spielberg", "actors in The Matrix",
+    "who directed Inception"), return the COMPLETE result set.
+  - Do NOT add LIMIT and do NOT add ORDER BY RAND() to these queries. The user
+    wants every matching row, not a random sample of it. A LIMIT here silently
+    drops real answers.
+
+  Result quality for generic enumerations:
+  - For open "list movies" / "list horror movies" style questions, also require
+    an English abstract so that empty stub pages are excluded and recognisable
+    films surface instead of obscure data-dump entries:
+      ?film dbo:abstract ?abs . FILTER(LANG(?abs) = "en")
+  - To keep genre lists clean, exclude television and web series, which DBpedia
+    sometimes mistypes as films:
+      FILTER NOT EXISTS { ?film a dbo:TelevisionShow }
+
+  Subjective questions:
+  - Do not use ORDER BY DESC(?film) to represent popularity, quality, fear,
+    importance, or ranking.
+  - Subjective questions such as "best movie", "scariest movie", "most famous
+    movie", or "greatest movie" cannot be answered objectively from DBpedia
+    unless a concrete property or ranking exists.
+  - For "scary" or "horror" movie questions, use the horror genre as a fallback
+    instead of inventing a ranking.
+
+  Cross-domain queries:
+  - For "films based on books", dbo:basedOn in DBpedia is heterogeneous: it
+    points to books, plays, musicals, franchises and even people (an author),
+    so a blacklist (only excluding films) leaks musicals, toy lines and
+    persons into the result. Instead WHITELIST the source as a literary work:
+      ?work a ?workType .
+      VALUES ?workType { dbo:Book dbo:Novel dbo:WrittenWork dbo:ShortStory }
+      FILTER NOT EXISTS { ?work a dbo:Film }
+    This keeps precision high (the source must be book-typed) while recovering
+    more real adaptations than dbo:WrittenWork alone, because DBpedia often
+    types a source as dbo:Book or dbo:Novel but not dbo:WrittenWork.
+  - Honest limitation for the answer: many well-known book-to-film
+    adaptations have no dbo:basedOn triple at all (or an untyped source) in
+    DBpedia, so this query reflects only the adaptations DBpedia happens to
+    record cleanly, not the full universe of literary adaptations.
+
+  Common DBpedia genre resources:
+  - horror / scary movies -> dbr:Horror_film
+  - science fiction / sci-fi movies -> dbr:Science_fiction_film
+  - comedy movies -> dbr:Comedy_film
+  - romance movies -> dbr:Romance_film
+  - action movies -> dbr:Action_film
+  - adventure movies -> dbr:Adventure_film
+  - documentary movies -> dbr:Documentary_film
+  - thriller movies -> dbr:Thriller_film
+  - drama movies -> dbr:Drama_film
+  - fantasy movies -> dbr:Fantasy_film
+  - crime movies -> dbr:Crime_film
+  - musical movies -> dbr:Musical_film
+  - western movies -> dbr:Western_film
+  - animated movies -> dbr:Animation
+
+few_shot_examples:
+  - question: "List 10 movies"
+    tag: "Simple"
+    sparql: |
+      SELECT DISTINCT ?film ?name WHERE {
+        ?film a dbo:Film .
+        ?film rdfs:label ?name .
+        ?film dbo:abstract ?abs .
+        FILTER(LANG(?name) = "en")
+        FILTER(LANG(?abs) = "en")
+      }
+      LIMIT 10
+
+  - question: "List movies directed by Steven Spielberg"
+    tag: "Lookup"
+    sparql: |
+      SELECT DISTINCT ?film ?name WHERE {
+        ?film a dbo:Film .
+        ?film dbo:director dbr:Steven_Spielberg .
+        ?film rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+
+  - question: "Who directed Inception?"
+    tag: "Lookup"
+    sparql: |
+      SELECT DISTINCT ?director ?name WHERE {
+        dbr:Inception dbo:director ?director .
+        ?director rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+
+  - question: "List actors who starred in The Matrix"
+    tag: "Lookup"
+    sparql: |
+      SELECT DISTINCT ?actor ?name WHERE {
+        dbr:The_Matrix dbo:starring ?actor .
+        ?actor rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+
+  - question: "Find science fiction movies"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?film ?name WHERE {
+        ?film a dbo:Film .
+        ?film dbo:genre dbr:Science_fiction_film .
+        ?film rdfs:label ?name .
+        ?film dbo:abstract ?abs .
+        FILTER(LANG(?name) = "en")
+        FILTER(LANG(?abs) = "en")
+        FILTER NOT EXISTS { ?film a dbo:TelevisionShow }
+      }
+      LIMIT 20
+
+  - question: "List horror movies"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?film ?name WHERE {
+        ?film a dbo:Film .
+        ?film dbo:genre dbr:Horror_film .
+        ?film rdfs:label ?name .
+        ?film dbo:abstract ?abs .
+        FILTER(LANG(?name) = "en")
+        FILTER(LANG(?abs) = "en")
+        FILTER NOT EXISTS { ?film a dbo:TelevisionShow }
+      }
+      LIMIT 20
+
+  - question: "What is the scariest movie in history?"
+    tag: "Subjective"
+    sparql: |
+      SELECT DISTINCT ?film ?name WHERE {
+        ?film a dbo:Film .
+        ?film dbo:genre dbr:Horror_film .
+        ?film rdfs:label ?name .
+        ?film dbo:abstract ?abs .
+        FILTER(LANG(?name) = "en")
+        FILTER(LANG(?abs) = "en")
+      }
+      LIMIT 10
+
+  - question: "List movies with their directors and release dates"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?film ?filmName ?director ?directorName ?date WHERE {
+        ?film a dbo:Film .
+        ?film dbo:director ?director .
+        ?film dbo:releaseDate ?date .
+        ?film rdfs:label ?filmName .
+        ?director rdfs:label ?directorName .
+        FILTER(LANG(?filmName) = "en")
+        FILTER(LANG(?directorName) = "en")
+      }
+      LIMIT 20
+
+  - question: "Count movies by genre"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?genre ?genreLabel (COUNT(DISTINCT ?film) AS ?movieCount) WHERE {
+        ?film a dbo:Film .
+        ?film dbo:genre ?genre .
+        ?genre rdfs:label ?genreLabel .
+        FILTER(LANG(?genreLabel) = "en")
+      }
+      GROUP BY ?genre ?genreLabel
+      ORDER BY DESC(?movieCount)
+      LIMIT 20
+
+  - question: "List the top 5 highest-grossing movies"
+    tag: "Ranking"
+    sparql: |
+      SELECT DISTINCT ?film ?name ?gross WHERE {
+        ?film a dbo:Film .
+        ?film dbo:gross ?gross .
+        ?film rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      ORDER BY DESC(xsd:double(?gross))
+      LIMIT 5
+
+  - question: "Which movie had the biggest budget?"
+    tag: "Ranking"
+    sparql: |
+      SELECT DISTINCT ?film ?name ?budget WHERE {
+        ?film a dbo:Film .
+        ?film dbo:budget ?budget .
+        ?film rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      ORDER BY DESC(xsd:double(?budget))
+      LIMIT 1
+
+  - question: "List films based on books"
+    tag: "Cross-domain"
+    sparql: |
+      SELECT DISTINCT ?film ?filmName ?work ?workName WHERE {
+        ?film a dbo:Film .
+        ?film dbo:basedOn ?work .
+        ?work a ?workType .
+        VALUES ?workType { dbo:Book dbo:Novel dbo:WrittenWork dbo:ShortStory }
+        ?film rdfs:label ?filmName .
+        ?work rdfs:label ?workName .
+        FILTER(LANG(?filmName) = "en")
+        FILTER(LANG(?workName) = "en")
+        FILTER NOT EXISTS { ?work a dbo:Film }
+      }
+      LIMIT 20
+
+example_questions:
+  - question: "List 10 movies"
+    tag: "Simple"
+  - question: "Who directed Inception?"
+    tag: "Lookup"
+  - question: "List movies directed by Steven Spielberg"
+    tag: "Lookup"
+  - question: "List actors who starred in The Matrix"
+    tag: "Lookup"
+  - question: "Find science fiction movies"
+    tag: "Filter"
+  - question: "List horror movies"
+    tag: "Filter"
+  - question: "What is the scariest movie in history?"
+    tag: "Subjective"
+  - question: "List movies with their directors and release dates"
+    tag: "Join"
+  - question: "Count movies by genre"
+    tag: "Aggregate"
+  - question: "List the top 5 highest-grossing movies"
+    tag: "Ranking"
+  - question: "List films based on books"
+    tag: "Cross-domain"

@@ -1,0 +1,761 @@
+domain_name: "TV Shows (DBpedia)"
+description: "Television domain using DBpedia: shows, episodes, seasons, creators, cast, networks, and genres"
+keywords:
+  - tv show
+  - tv shows
+  - television
+  - series
+  - show
+  - shows
+  - sitcom
+  - drama
+  - episode
+  - episodes
+  - season
+  - seasons
+  - network
+  - channel
+  - cast
+  - actor
+  - actors
+  - actress
+  - creator
+  - showrunner
+  - streaming
+  - HBO
+  - Netflix
+  - BBC
+  - NBC
+  - CBS
+  - animated series
+  - soap opera
+  - miniseries
+
+endpoint: "https://dbpedia.org/sparql"
+
+prefixes: |
+  PREFIX dbo: <http://dbpedia.org/ontology/>
+  PREFIX dbr: <http://dbpedia.org/resource/>
+  PREFIX dbp: <http://dbpedia.org/property/>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+ontology_hints: |
+  === THIS IS A DBPEDIA ENDPOINT, NOT WIKIDATA ===
+  Never use: SERVICE wikibase:label, wd:, wdt:, bd:serviceParam.
+  The rules below fully replace any Wikidata-specific instructions.
+
+  === DBpedia Classes for TV ===
+  - dbo:TelevisionShow    — a TV series; use for "show", "series", "programme"
+  - dbo:TelevisionSeason  — a single season of a show
+  - dbo:TelevisionEpisode — a single episode
+
+  === DBpedia Properties for TV ===
+  - dbo:network           — broadcasting network (resource, e.g. dbr:HBO, dbr:Netflix)
+  - dbo:creator           — show creator / writer (resource, links to person)
+  - dbo:starring          — cast member / actor (resource, links to person)
+  - dbo:producer          — executive producer (resource, links to person)
+  - dbo:genre             — genre (resource, e.g. dbr:Drama, dbr:Comedy)
+  - dbo:numberOfEpisodes  — total episode count (integer literal)
+  - dbo:numberOfSeasons   — total season count (integer literal)
+  - dbo:series            — links an episode or season to its parent show
+  - dbo:country           — country of origin (resource, e.g. dbr:United_States)
+  - dbo:releaseDate       — original air date (date literal)
+  - dbo:runtime           — runtime per episode in seconds (integer literal)
+  - dbo:language          — language resource (e.g. dbr:English_language)
+  - dbo:abstract          — text description (filter with FILTER(LANG(?abstract) = "en"))
+  - rdfs:label            — human-readable name; ALWAYS filter with FILTER(LANG(?x) = "en")
+
+  === CRITICAL RULES (apply to every query) ===
+  1. EVERY rdfs:label variable MUST have FILTER(LANG(?varname) = "en") immediately after the triple.
+  2. ALWAYS use SELECT DISTINCT (except for aggregate queries using COUNT, SUM, etc.).
+  3. ALWAYS include LIMIT — default is 20 unless the question specifies a different number.
+  4. For matching a specific known entity by name use the @en literal tag: ?show rdfs:label "Breaking Bad"@en .
+  5. Do NOT invent DBpedia resource names. Use verified URIs from the lists below,
+     or fall back to label matching for anything not listed.
+  6. Wrap OPTIONAL around properties that may be missing (e.g. dbo:numberOfEpisodes).
+  7. For numeric filtering (episode counts, dates), use FILTER with typed comparison:
+       FILTER(?episodes > 100)
+       FILTER(?date > "2010-01-01"^^xsd:date)
+  8. CRITICAL: Prefixed names (dbr:X) CANNOT contain parentheses. For any resource whose
+     name contains parentheses, you MUST use the full URI in angle brackets instead:
+       WRONG: dbr:Thriller_(genre)
+       RIGHT: <http://dbpedia.org/resource/Thriller_(genre)>
+     This rule applies to ALL resources with parentheses — shows, genres, networks, etc.
+
+  === Query Patterns ===
+
+  List TV shows:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    } LIMIT 20
+
+  Creator of a show (known resource):
+    SELECT ?creator ?creatorName WHERE {
+      dbr:Breaking_Bad dbo:creator ?creator .
+      ?creator rdfs:label ?creatorName .
+      FILTER(LANG(?creatorName) = "en")
+    }
+
+  Creator of a show (unknown — use label match):
+    SELECT ?creator ?creatorName WHERE {
+      ?show rdfs:label "Show Name"@en .
+      ?show dbo:creator ?creator .
+      ?creator rdfs:label ?creatorName .
+      FILTER(LANG(?creatorName) = "en")
+    }
+
+  Cast of a show:
+    SELECT ?actor ?actorName WHERE {
+      dbr:Friends dbo:starring ?actor .
+      ?actor rdfs:label ?actorName .
+      FILTER(LANG(?actorName) = "en")
+    }
+
+  Shows on a network:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network dbr:HBO .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    } LIMIT 20
+
+  Shows of a genre:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:genre dbr:Drama .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    } LIMIT 20
+
+  Episodes of a show:
+    DBpedia does NOT reliably link episodes via dbo:series.
+    Instead, episodes are typed dbo:TelevisionEpisode and their labels contain
+    the show name in parentheses, e.g. "Winter Is Coming (Game of Thrones)".
+    Use CONTAINS on the label to find episodes of a specific show:
+    SELECT DISTINCT ?episode ?name WHERE {
+      ?episode a dbo:TelevisionEpisode .
+      ?episode rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+      FILTER(CONTAINS(?name, "Game of Thrones"))
+    } LIMIT 30
+
+  Shows from a country:
+    SELECT DISTINCT ?show ?name WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:country dbr:United_Kingdom .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+    } LIMIT 20
+
+  Shows with many episodes:
+    SELECT DISTINCT ?show ?name ?episodes WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:numberOfEpisodes ?episodes .
+      ?show rdfs:label ?name .
+      FILTER(LANG(?name) = "en")
+      FILTER(?episodes > 200)
+    } ORDER BY DESC(?episodes) LIMIT 20
+
+  Show details with creator and optional episode count:
+    SELECT DISTINCT ?show ?showName ?creatorName ?episodes WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:creator ?creator .
+      ?show rdfs:label ?showName .
+      ?creator rdfs:label ?creatorName .
+      OPTIONAL { ?show dbo:numberOfEpisodes ?episodes . }
+      FILTER(LANG(?showName) = "en")
+      FILTER(LANG(?creatorName) = "en")
+    } LIMIT 20
+
+  Shows an actor appeared in:
+    SELECT DISTINCT ?show ?showName WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:starring dbr:Bryan_Cranston .
+      ?show rdfs:label ?showName .
+      FILTER(LANG(?showName) = "en")
+    }
+
+  Count shows by network (aggregate):
+    SELECT ?networkName (COUNT(DISTINCT ?show) AS ?showCount) WHERE {
+      ?show a dbo:TelevisionShow .
+      ?show dbo:network ?network .
+      ?network rdfs:label ?networkName .
+      FILTER(LANG(?networkName) = "en")
+    } GROUP BY ?networkName ORDER BY DESC(?showCount) LIMIT 15
+
+  === Known Show Resources (verified DBpedia URIs) ===
+  Breaking Bad              -> dbr:Breaking_Bad
+  Game of Thrones           -> dbr:Game_of_Thrones
+  Friends                   -> dbr:Friends
+  The Simpsons              -> dbr:The_Simpsons
+  The Wire                  -> dbr:The_Wire
+  Seinfeld                  -> dbr:Seinfeld
+  The Sopranos              -> dbr:The_Sopranos
+  The Office (US)           -> <http://dbpedia.org/resource/The_Office_(American_TV_series)>
+  Lost                      -> <http://dbpedia.org/resource/Lost_(TV_series)>
+  Stranger Things           -> dbr:Stranger_Things
+  Dexter                    -> <http://dbpedia.org/resource/Dexter_(TV_series)>
+  24                        -> <http://dbpedia.org/resource/24_(TV_series)>
+  House of Cards (US)       -> <http://dbpedia.org/resource/House_of_Cards_(American_TV_series)>
+  Sherlock                  -> <http://dbpedia.org/resource/Sherlock_(TV_series)>
+  Black Mirror              -> dbr:Black_Mirror
+  Twin Peaks                -> dbr:Twin_Peaks
+  Westworld                 -> <http://dbpedia.org/resource/Westworld_(TV_series)>
+  The Crown                 -> <http://dbpedia.org/resource/The_Crown_(TV_series)>
+  South Park                -> dbr:South_Park
+  Family Guy                -> dbr:Family_Guy
+  How I Met Your Mother     -> dbr:How_I_Met_Your_Mother
+  The Big Bang Theory       -> dbr:The_Big_Bang_Theory
+  Peaky Blinders            -> dbr:Peaky_Blinders_(TV_series)
+  Grey's Anatomy            -> use label match: ?show rdfs:label "Grey's Anatomy"@en .
+
+  === Known Network Resources (verified DBpedia URIs) ===
+  HBO          -> dbr:HBO
+  Netflix      -> dbr:Netflix
+  NBC          -> dbr:NBC
+  CBS          -> dbr:CBS
+  ABC (US)     -> <http://dbpedia.org/resource/ABC_(American_TV_channel)>
+  Fox          -> dbr:Fox_Broadcasting_Company
+  AMC          -> <http://dbpedia.org/resource/AMC_(TV_channel)>
+  Showtime     -> <http://dbpedia.org/resource/Showtime_(TV_network)>
+  BBC          -> dbr:BBC
+  FX           -> <http://dbpedia.org/resource/FX_(TV_channel)>
+  Hulu         -> use label match: ?network rdfs:label "Hulu"@en .
+  Amazon Prime -> use label match: ?network rdfs:label "Amazon Prime Video"@en .
+
+  === Known Country Resources (verified DBpedia URIs) ===
+  United States  -> dbr:United_States
+  United Kingdom -> dbr:United_Kingdom
+  Canada         -> dbr:Canada
+  Australia      -> dbr:Australia
+  Japan          -> dbr:Japan
+
+  === Known Genre Resources (verified DBpedia URIs) ===
+  Drama          -> dbr:Drama
+  Comedy         -> dbr:Comedy
+  Animation      -> dbr:Animation
+  Crime fiction  -> dbr:Crime_fiction
+  Thriller       -> <http://dbpedia.org/resource/Thriller_(genre)>
+  Horror         -> dbr:Horror_fiction
+  Reality TV     -> dbr:Reality_television
+  Documentary    -> dbr:Documentary_film
+  Action         -> dbr:Action_fiction
+  Science fiction -> dbr:Science_fiction_on_television
+
+  === When Entity Name Is NOT in the Known Lists ===
+  Use label matching with the @en literal tag instead of guessing a dbr: URI:
+    ?show rdfs:label "Exact Show Name"@en .
+  Do NOT construct resource names by replacing spaces with underscores when you are unsure.
+
+few_shot_examples:
+  - question: "List 10 TV shows"
+    tag: "Simple"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 10
+
+  - question: "List 20 animated TV shows"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:genre dbr:Animation .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "Who created Breaking Bad?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?creator ?creatorName WHERE {
+        dbr:Breaking_Bad dbo:creator ?creator .
+        ?creator rdfs:label ?creatorName .
+        FILTER(LANG(?creatorName) = "en")
+      }
+
+  - question: "List actors who starred in Friends"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?actor ?actorName WHERE {
+        dbr:Friends dbo:starring ?actor .
+        ?actor rdfs:label ?actorName .
+        FILTER(LANG(?actorName) = "en")
+      }
+
+  - question: "List episodes of Game of Thrones"
+    tag: "Lookup"
+    sparql: |
+      SELECT DISTINCT ?episode ?name WHERE {
+        ?episode a dbo:TelevisionEpisode .
+        ?episode rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+        FILTER(CONTAINS(?name, "Game of Thrones"))
+      }
+      LIMIT 30
+
+  - question: "List TV shows on HBO"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:network dbr:HBO .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "Find drama TV shows"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:genre dbr:Drama .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List 15 thriller series"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:genre <http://dbpedia.org/resource/Thriller_(genre)> .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 15
+
+  - question: "List TV shows from the United Kingdom"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:country dbr:United_Kingdom .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List TV shows with more than 200 episodes"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name ?episodes WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:numberOfEpisodes ?episodes .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+        FILTER(?episodes > 200)
+      }
+      ORDER BY DESC(?episodes)
+      LIMIT 20
+
+  - question: "List TV shows with their creators and number of episodes"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?show ?showName ?creatorName ?episodes WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:creator ?creator .
+        ?show rdfs:label ?showName .
+        ?creator rdfs:label ?creatorName .
+        OPTIONAL { ?show dbo:numberOfEpisodes ?episodes . }
+        FILTER(LANG(?showName) = "en")
+        FILTER(LANG(?creatorName) = "en")
+      }
+      LIMIT 20
+
+  - question: "Which TV shows did Bryan Cranston appear in?"
+    tag: "Lookup"
+    sparql: |
+      SELECT DISTINCT ?show ?showName WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:starring dbr:Bryan_Cranston .
+        ?show rdfs:label ?showName .
+        FILTER(LANG(?showName) = "en")
+      }
+
+  - question: "List TV shows with their network and genre"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?showName ?networkName ?genreName WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:network ?network .
+        ?show dbo:genre ?genre .
+        ?show rdfs:label ?showName .
+        ?network rdfs:label ?networkName .
+        ?genre rdfs:label ?genreName .
+        FILTER(LANG(?showName) = "en")
+        FILTER(LANG(?networkName) = "en")
+        FILTER(LANG(?genreName) = "en")
+      }
+      LIMIT 20
+
+  - question: "Count TV shows by network"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?networkName (COUNT(DISTINCT ?show) AS ?showCount) WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:network ?network .
+        ?network rdfs:label ?networkName .
+        FILTER(LANG(?networkName) = "en")
+      }
+      GROUP BY ?networkName
+      ORDER BY DESC(?showCount)
+      LIMIT 15
+
+  - question: "Count TV shows by genre"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?genreName (COUNT(DISTINCT ?show) AS ?showCount) WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:genre ?genre .
+        ?genre rdfs:label ?genreName .
+        FILTER(LANG(?genreName) = "en")
+      }
+      GROUP BY ?genreName
+      ORDER BY DESC(?showCount)
+      LIMIT 15
+
+  - question: "List comedy TV shows"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:genre dbr:Comedy .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List reality TV shows"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:genre dbr:Reality_television .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List science fiction TV shows"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:genre dbr:Science_fiction_on_television .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List TV shows from the United States"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:country dbr:United_States .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List TV shows on Netflix"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:network dbr:Netflix .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List TV shows on AMC"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:network <http://dbpedia.org/resource/AMC_(TV_channel)> .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List actors who starred in The Sopranos"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?actor ?actorName WHERE {
+        dbr:The_Sopranos dbo:starring ?actor .
+        ?actor rdfs:label ?actorName .
+        FILTER(LANG(?actorName) = "en")
+      }
+
+  - question: "What network and genre does The Simpsons belong to?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?networkName ?genreName WHERE {
+        dbr:The_Simpsons dbo:network ?network .
+        dbr:The_Simpsons dbo:genre ?genre .
+        ?network rdfs:label ?networkName .
+        ?genre rdfs:label ?genreName .
+        FILTER(LANG(?networkName) = "en")
+        FILTER(LANG(?genreName) = "en")
+      }
+
+  - question: "Who created Game of Thrones?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?creator ?creatorName WHERE {
+        dbr:Game_of_Thrones dbo:creator ?creator .
+        ?creator rdfs:label ?creatorName .
+        FILTER(LANG(?creatorName) = "en")
+      }
+
+  - question: "List TV shows with fewer than 30 episodes"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name ?episodes WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:numberOfEpisodes ?episodes .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+        FILTER(?episodes > 0 && ?episodes < 30)
+      }
+      ORDER BY ASC(?episodes)
+      LIMIT 20
+
+  - question: "Count TV shows by country of origin"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?countryName (COUNT(DISTINCT ?show) AS ?showCount) WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:country ?country .
+        ?country rdfs:label ?countryName .
+        FILTER(LANG(?countryName) = "en")
+      }
+      GROUP BY ?countryName
+      ORDER BY DESC(?showCount)
+      LIMIT 15
+
+  - question: "List TV shows with their network and number of episodes"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?showName ?networkName ?episodes WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:network ?network .
+        ?show rdfs:label ?showName .
+        ?network rdfs:label ?networkName .
+        OPTIONAL { ?show dbo:numberOfEpisodes ?episodes . }
+        FILTER(LANG(?showName) = "en")
+        FILTER(LANG(?networkName) = "en")
+      }
+      LIMIT 20
+
+  - question: "List TV shows with their country and genre"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?showName ?countryName ?genreName WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:country ?country .
+        ?show dbo:genre ?genre .
+        ?show rdfs:label ?showName .
+        ?country rdfs:label ?countryName .
+        ?genre rdfs:label ?genreName .
+        FILTER(LANG(?showName) = "en")
+        FILTER(LANG(?countryName) = "en")
+        FILTER(LANG(?genreName) = "en")
+      }
+      LIMIT 20
+
+  - question: "List TV shows on BBC"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:network dbr:BBC .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List TV shows on CBS"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:network dbr:CBS .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List TV shows on Fox"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:network dbr:Fox_Broadcasting_Company .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List horror TV shows"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:genre dbr:Horror_fiction .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List crime fiction TV shows"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:genre dbr:Crime_fiction .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "List TV shows from Canada"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?show ?name WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:country dbr:Canada .
+        ?show rdfs:label ?name .
+        FILTER(LANG(?name) = "en")
+      }
+      LIMIT 20
+
+  - question: "Who created Grey's Anatomy?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?creator ?creatorName WHERE {
+        ?show rdfs:label "Grey's Anatomy"@en .
+        ?show dbo:creator ?creator .
+        ?creator rdfs:label ?creatorName .
+        FILTER(LANG(?creatorName) = "en")
+      }
+
+  - question: "What network airs Stranger Things?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?network ?networkName WHERE {
+        dbr:Stranger_Things dbo:network ?network .
+        ?network rdfs:label ?networkName .
+        FILTER(LANG(?networkName) = "en")
+      }
+
+  - question: "List TV shows with their creators and country of origin"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?showName ?creatorName ?countryName WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:creator ?creator .
+        ?show dbo:country ?country .
+        ?show rdfs:label ?showName .
+        ?creator rdfs:label ?creatorName .
+        ?country rdfs:label ?countryName .
+        FILTER(LANG(?showName) = "en")
+        FILTER(LANG(?creatorName) = "en")
+        FILTER(LANG(?countryName) = "en")
+      }
+      LIMIT 20
+
+  - question: "Count TV shows by creator"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?creatorName (COUNT(DISTINCT ?show) AS ?showCount) WHERE {
+        ?show a dbo:TelevisionShow .
+        ?show dbo:creator ?creator .
+        ?creator rdfs:label ?creatorName .
+        FILTER(LANG(?creatorName) = "en")
+      }
+      GROUP BY ?creatorName
+      ORDER BY DESC(?showCount)
+      LIMIT 15
+
+example_questions:
+  - question: "List 10 TV shows"
+    tag: "Simple"
+  - question: "Who created Breaking Bad?"
+    tag: "Lookup"
+  - question: "List actors who starred in Friends"
+    tag: "Lookup"
+  - question: "List episodes of Game of Thrones"
+    tag: "Lookup"
+  - question: "List TV shows on HBO"
+    tag: "Filter"
+  - question: "Find drama TV shows"
+    tag: "Filter"
+  - question: "List TV shows with more than 200 episodes"
+    tag: "Filter"
+  - question: "List TV shows with their creators and number of episodes"
+    tag: "Join"
+  - question: "Count TV shows by network"
+    tag: "Aggregate"
+  - question: "List TV shows from the United Kingdom"
+    tag: "Filter"
+  - question: "List comedy TV shows"
+    tag: "Filter"
+  - question: "List reality TV shows"
+    tag: "Filter"
+  - question: "List science fiction TV shows"
+    tag: "Filter"
+  - question: "List TV shows from the United States"
+    tag: "Filter"
+  - question: "List TV shows on Netflix"
+    tag: "Filter"
+  - question: "List TV shows on AMC"
+    tag: "Filter"
+  - question: "List actors who starred in The Sopranos"
+    tag: "Lookup"
+  - question: "What network and genre does The Simpsons belong to?"
+    tag: "Lookup"
+  - question: "Who created Game of Thrones?"
+    tag: "Lookup"
+  - question: "List TV shows with fewer than 30 episodes"
+    tag: "Filter"
+  - question: "Count TV shows by country of origin"
+    tag: "Aggregate"
+  - question: "List TV shows with their network and number of episodes"
+    tag: "Join"
+  - question: "List TV shows with their country and genre"
+    tag: "Join"
+  - question: "List TV shows on BBC"
+    tag: "Filter"
+  - question: "List TV shows on CBS"
+    tag: "Filter"
+  - question: "List TV shows on Fox"
+    tag: "Filter"
+  - question: "List horror TV shows"
+    tag: "Filter"
+  - question: "List crime fiction TV shows"
+    tag: "Filter"
+  - question: "List TV shows from Canada"
+    tag: "Filter"
+  - question: "Who created Grey's Anatomy?"
+    tag: "Lookup"
+  - question: "What network airs Stranger Things?"
+    tag: "Lookup"
+  - question: "List TV shows with their creators and country of origin"
+    tag: "Join"
+  - question: "Count TV shows by creator"
+    tag: "Aggregate"

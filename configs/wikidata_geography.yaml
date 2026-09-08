@@ -1,0 +1,242 @@
+# Domain Configuration: Geography (Wikidata)
+# ============================================
+# Countries, cities, mountains, rivers, and geographic features.
+
+domain_name: "Geography (Wikidata)"
+description: "Geographic domain: countries, cities, mountains, rivers, and natural features"
+keywords:
+  - country
+  - countries
+  - city
+  - cities
+  - capital
+  - mountain
+  - mountains
+  - river
+  - rivers
+  - lake
+  - ocean
+  - continent
+  - island
+  - population
+  - border
+  - borders
+  - neighbour
+  - neighbours
+  - neighbor
+  - neighbors
+  - neighbouring
+  - neighboring
+  - adjacent
+  - geography
+  - region
+  - territory
+  - nation
+  - village
+  - turkey
+  - türkiye
+
+endpoint: "https://query.wikidata.org/sparql"
+
+prefixes: |
+  PREFIX wd: <http://www.wikidata.org/entity/>
+  PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+ontology_hints: |
+  Key Wikidata properties for geography:
+  - wdt:P31 = "instance of"
+  - wdt:P17 = "country"
+  - wdt:P36 = "capital (of a country)"
+  - wdt:P30 = "continent"
+  - wdt:P47 = "shares border with / neighbouring country or region"
+  - wdt:P610 = "highest point"
+  - wdt:P1082 = "population"
+  - wdt:P2044 = "elevation above sea level"
+  - wdt:P2043 = "length (rivers)"
+  - wdt:P2046 = "area"
+  - wdt:P625 = "coordinate location"
+
+  NEIGHBOUR / BORDER QUERIES — use wdt:P47:
+  - To find countries bordering a named country, match the country by rdfs:label then traverse wdt:P47.
+  - Always filter neighbours to wdt:P31 wd:Q6256 (country) to exclude non-country entities.
+  - "Turkey" and "Türkiye" both refer to wd:Q43 — use rdfs:label matching, not a hard-coded QID.
+  - Example pattern for "neighbours of France":
+      ?country rdfs:label "France"@en .
+      ?country wdt:P31 wd:Q6256 .
+      ?country wdt:P47 ?neighbour .
+      ?neighbour wdt:P31 wd:Q6256 .
+
+  Key entities:
+  - wd:Q6256 = "country"
+  - wd:Q515 = "city"
+  - wd:Q8502 = "mountain"
+  - wd:Q4022 = "river"
+  - wd:Q23397 = "lake"
+  - wd:Q5107 = "continent"
+  - wd:Q46 = "Europe", wd:Q48 = "Asia", wd:Q49 = "North America"
+  - wd:Q18 = "South America", wd:Q15 = "Africa", wd:Q51 = "Antarctica"
+
+  IMPORTANT — Unit inconsistency in Wikidata:
+  - P2044 (elevation), P2046 (area), and P2043 (length) are stored in
+    inconsistent units across entries (metres vs feet, m² vs km², m vs km).
+  - NEVER use a simple numeric FILTER on these properties — you will get
+    wrong results mixing different units.
+  - For mountains above 8000m: use VALUES with verified eight-thousander QIDs.
+    Known QIDs: wd:Q513 Everest, wd:Q43512 K2, wd:Q1230019 Kangchenjunga,
+    wd:Q168702 Lhotse, wd:Q169986 Makalu, wd:Q170089 Cho Oyu,
+    wd:Q165440 Dhaulagiri, wd:Q170070 Manaslu, wd:Q130736 Nanga Parbat,
+    wd:Q16466024 Annapurna I, wd:Q180996 Broad Peak,
+    wd:Q186853 Gasherbrum II, wd:Q105124 Shishapangma
+  - For large lakes (> 10000 km²): use VALUES with verified QIDs.
+    Known QIDs: wd:Q5484 Caspian Sea, wd:Q1066 Lake Superior,
+    wd:Q1383 Lake Huron, wd:Q1169 Lake Michigan, wd:Q5511 Lake Tanganyika,
+    wd:Q5513 Lake Baikal, wd:Q5525 Great Bear Lake, wd:Q5532 Lake Malawi,
+    wd:Q5539 Great Slave Lake, wd:Q5492 Lake Erie
+  - For rivers: length is usually stored in km for major rivers.
+    Use FILTER(?length > 2000 && ?length < 10000) to capture km-stored
+    values for the world's longest rivers.
+
+few_shot_examples:
+  - question: "List all continents"
+    tag: "Simple"
+    sparql: |
+      SELECT ?continent ?continentLabel WHERE {
+        ?continent wdt:P31 wd:Q5107 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "List countries in Europe with their capitals"
+    tag: "Join"
+    sparql: |
+      SELECT ?country ?countryLabel ?capital ?capitalLabel WHERE {
+        ?country wdt:P31 wd:Q6256 .
+        ?country wdt:P30 wd:Q46 .
+        ?country wdt:P36 ?capital .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      ORDER BY ?countryLabel
+
+  - question: "List the 10 most populous cities in the world"
+    tag: "Filter"
+    sparql: |
+      SELECT ?city ?cityLabel ?population WHERE {
+        ?city wdt:P31 wd:Q515 .
+        ?city wdt:P1082 ?population .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      ORDER BY DESC(?population)
+      LIMIT 10
+
+  - question: "List mountains higher than 8000 metres"
+    tag: "Filter"
+    sparql: |
+      SELECT ?mountain ?mountainLabel WHERE {
+        VALUES ?mountain {
+          wd:Q513 wd:Q43512 wd:Q1230019 wd:Q168702 wd:Q169986 wd:Q170089
+          wd:Q165440 wd:Q170070 wd:Q130736 wd:Q16466024
+          wd:Q180996 wd:Q186853 wd:Q105124
+        }
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "List the longest rivers in the world"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?river ?riverLabel ?length WHERE {
+        ?river wdt:P31 wd:Q4022 .
+        ?river wdt:P2043 ?length .
+        ?river rdfs:label ?riverLabel .
+        FILTER(?length > 2000 && ?length < 10000)
+        FILTER(LANG(?riverLabel) = "en")
+      }
+      ORDER BY DESC(?length)
+      LIMIT 10
+
+  - question: "List countries in Asia and their populations"
+    tag: "Filter"
+    sparql: |
+      SELECT ?country ?countryLabel ?population WHERE {
+        ?country wdt:P31 wd:Q6256 .
+        ?country wdt:P30 wd:Q48 .
+        ?country wdt:P1082 ?population .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      ORDER BY DESC(?population)
+      LIMIT 20
+
+  - question: "List lakes with an area larger than 10000 square kilometres"
+    tag: "Filter"
+    sparql: |
+      SELECT ?lake ?lakeLabel WHERE {
+        VALUES ?lake {
+          wd:Q5484 wd:Q1066 wd:Q1383 wd:Q1169 wd:Q5511
+          wd:Q5513 wd:Q5525 wd:Q5532 wd:Q5539 wd:Q5492
+        }
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "Count countries by continent"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?continent ?continentLabel (COUNT(?country) AS ?count) WHERE {
+        ?country wdt:P31 wd:Q6256 .
+        ?country wdt:P30 ?continent .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      GROUP BY ?continent ?continentLabel
+      ORDER BY DESC(?count)
+
+  - question: "List the neighbouring countries of France"
+    tag: "Neighbour"
+    sparql: |
+      SELECT ?neighbour ?neighbourLabel WHERE {
+        ?country rdfs:label "France"@en .
+        ?country wdt:P31 wd:Q6256 .
+        ?country wdt:P47 ?neighbour .
+        ?neighbour wdt:P31 wd:Q6256 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "Count the number of neighbours of Germany"
+    tag: "Aggregate"
+    sparql: |
+      SELECT (COUNT(?neighbour) AS ?neighbourCount) WHERE {
+        ?country rdfs:label "Germany"@en .
+        ?country wdt:P31 wd:Q6256 .
+        ?country wdt:P47 ?neighbour .
+        ?neighbour wdt:P31 wd:Q6256 .
+      }
+
+  - question: "Count neighbours of Turkey and say their names"
+    tag: "Neighbour"
+    sparql: |
+      SELECT ?neighbour ?neighbourLabel WHERE {
+        ?country rdfs:label "Turkey"@en .
+        ?country wdt:P31 wd:Q6256 .
+        ?country wdt:P47 ?neighbour .
+        ?neighbour wdt:P31 wd:Q6256 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+example_questions:
+  - question: "List all continents"
+    tag: "Simple"
+  - question: "List countries in Europe with their capitals"
+    tag: "Join"
+  - question: "List the 10 most populous cities in the world"
+    tag: "Filter"
+  - question: "List mountains higher than 8000 metres"
+    tag: "Filter"
+  - question: "List the longest rivers in the world"
+    tag: "Filter"
+  - question: "List countries in Asia and their populations"
+    tag: "Filter"
+  - question: "List lakes with an area larger than 10000 square kilometres"
+    tag: "Filter"
+  - question: "Count countries by continent"
+    tag: "Aggregate"
+  - question: "List the neighbouring countries of France"
+    tag: "Neighbour"
+  - question: "Count the number of neighbours of Germany"
+    tag: "Aggregate"

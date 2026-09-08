@@ -1,0 +1,520 @@
+================================================================================
+  Sports (Wikidata) — Comprehensive Query Accuracy Benchmark
+  Domain  : Sports (Wikidata)
+  Endpoint: https://query.wikidata.org/sparql
+  Run at  : 2026-05-15 19:04:34 UTC
+================================================================================
+
+SUMMARY — few_shot_examples
+--------------------------------------------------------------------------------
+  Total queries : 15
+  PASS (>= 1 row): 13
+  EMPTY (0 rows) : 0
+  FAIL  (error)  : 2
+  SKIP  (no SPARQL): 0
+  Accuracy       : 86.7%  (13/15 returned results)
+  Avg response   : 20.98s
+
+SUMMARY — validation probes
+--------------------------------------------------------------------------------
+  Total probes   : 18
+  PASS (>= 1 row): 11
+  EMPTY (0 rows) : 5
+
+DETAIL — few_shot_examples
+--------------------------------------------------------------------------------
+
+[FAIL ]  #01  [Simple]  List 10 football players
+  Rows: 0   Time: 60.19s
+  Error: Query timed out (60s limit)
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P106 wd:Q937857 .
+      ?player wdt:P31 wd:Q5 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 10
+
+[PASS ]  #02  [Simple]  List 10 tennis players
+  Rows: 10   Time: 36.94s
+  Sample output:
+    { player='Q38129', playerLabel='Barbara Potter' }
+    { player='Q40484', playerLabel='Charles Winslow' }
+    { player='Q45010', playerLabel='Ricardo Mello' }
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P106 wd:Q10833314 .
+      ?player wdt:P31 wd:Q5 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 10
+
+[PASS ]  #03  [Simple]  List 10 basketball players
+  Rows: 10   Time: 53.22s
+  Sample output:
+    { player='Q60118', playerLabel='Danilo Gallinari' }
+    { player='Q60478', playerLabel='DeAndre Jordan' }
+    { player='Q60971', playerLabel='Armond Hill' }
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P641 wd:Q5372 .
+      ?player wdt:P31 wd:Q5 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 10
+
+[PASS ]  #04  [Filter]  List hockey players from Geneva
+  Rows: 20   Time: 1.24s
+  Sample output:
+    { player='Q1912716', playerLabel='Max Holzboer' }
+    { player='Q1336053', playerLabel='Edouard Filliol' }
+    { player='Q1606933', playerLabel='Olivier Keller' }
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P106 wd:Q11774891 .
+      ?player wdt:P19 wd:Q71 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 20
+
+[PASS ]  #05  [Lookup]  List players who were members of FC Barcelona
+  Rows: 20   Time: 3.09s
+  Sample output:
+    { player='Q615', playerLabel='Lionel Messi' }
+    { player='Q1839', playerLabel='Laurent Blanc' }
+    { player='Q1935', playerLabel='Eric Abidal' }
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P54 wd:Q7156 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 20
+
+[PASS ]  #06  [Lookup]  List players who were members of Real Madrid
+  Rows: 20   Time: 1.19s
+  Sample output:
+    { player='Q282990', playerLabel='Esteban Granero' }
+    { player='Q283824', playerLabel='Borja Valero' }
+    { player='Q286511', playerLabel='Christian Karembeu' }
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P54 wd:Q8682 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 20
+
+[PASS ]  #07  [Lookup]  Who won the FIFA World Cup?
+  Rows: 22   Time: 0.52s
+  Sample output:
+    { edition='Q101730', editionLabel='1998 FIFA World Cup', winner='Q47774', winnerLabel="France men's national association football team" }
+    { edition='Q101751', editionLabel='1994 FIFA World Cup', winner='Q83459', winnerLabel="Brazil men's national football team" }
+    { edition='Q131075', editionLabel='1954 FIFA World Cup', winner='Q43310', winnerLabel="Germany men's national association football team" }
+  SPARQL:
+    SELECT ?edition ?editionLabel ?winner ?winnerLabel WHERE {
+      ?edition wdt:P3450 wd:Q19317 .
+      ?edition wdt:P1346 ?winner .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    ORDER BY ?edition
+
+[PASS ]  #08  [Filter]  List tennis players from the United States
+  Rows: 20   Time: 3.38s
+  Sample output:
+    { player='Q38129', playerLabel='Barbara Potter' }
+    { player='Q45405', playerLabel='Christina McHale' }
+    { player='Q45658', playerLabel='Wayne Odesnik' }
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P106 wd:Q10833314 .
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P27 wd:Q30 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 20
+
+[PASS ]  #09  [Filter]  List basketball players born after 1990
+  Rows: 20   Time: 57.56s
+  Sample output:
+    { player='Q40657', playerLabel='Terrence Jones', birth='1992-01-09T00:00:00Z' }
+    { player='Q48839', playerLabel='Maalik Wayns', birth='1991-05-02T00:00:00Z' }
+    { player='Q65039', playerLabel='Dion Waiters', birth='1991-12-10T00:00:00Z' }
+  SPARQL:
+    SELECT ?player ?playerLabel ?birth WHERE {
+      ?player wdt:P641 wd:Q5372 .
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P569 ?birth .
+      FILTER(YEAR(?birth) > 1990)
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 20
+
+[PASS ]  #10  [Filter]  List Olympic gold medalists in athletics
+  Rows: 5   Time: 1.31s
+  Sample output:
+    { athlete='Q24951701', athleteLabel='Chioma Onyekwere' }
+    { athlete='Q234762', athleteLabel='Cathy Freeman' }
+    { athlete='Q270922', athleteLabel='Alice Coachman' }
+  SPARQL:
+    SELECT DISTINCT ?athlete ?athleteLabel WHERE {
+      ?athlete wdt:P166 wd:Q15243387 .
+      ?athlete wdt:P641 wd:Q542 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 20
+
+[PASS ]  #11  [Lookup]  List football clubs in the English Premier League
+  Rows: 21   Time: 0.68s
+  Sample output:
+    { club='Q130302376', clubLabel='CSM Târgu Jiu' }
+    { club='Q1128631', clubLabel='Leeds United F.C.' }
+    { club='Q1130849', clubLabel='Liverpool F.C.' }
+  SPARQL:
+    SELECT ?club ?clubLabel WHERE {
+      ?club wdt:P31 wd:Q476028 .
+      ?club wdt:P118 wd:Q9448 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+
+[FAIL ]  #12  [Aggregate]  Count athletes by sport
+  Rows: 0   Time: 60.15s
+  Error: Query timed out (60s limit)
+  SPARQL:
+    SELECT ?sportLabel (COUNT(?athlete) AS ?count) WHERE {
+      ?athlete wdt:P31 wd:Q5 .
+      ?athlete wdt:P641 ?sport .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    GROUP BY ?sport ?sportLabel
+    ORDER BY DESC(?count)
+    LIMIT 20
+
+[PASS ]  #13  [Lookup]  Where was Lionel Messi born?
+  Rows: 1   Time: 0.68s
+  Sample output:
+    { birthPlace='Q52535', birthPlaceLabel='Rosario' }
+  SPARQL:
+    SELECT ?birthPlace ?birthPlaceLabel WHERE {
+      ?player rdfs:label "Lionel Messi"@en .
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P19 ?birthPlace .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+
+[PASS ]  #14  [Lookup]  Which club does Kylian Mbappé play for?
+  Rows: 1   Time: 0.92s
+  Sample output:
+    { team='Q8682', teamLabel='Real Madrid Club de Fútbol' }
+  SPARQL:
+    SELECT ?team ?teamLabel WHERE {
+      ?player rdfs:label "Kylian Mbappé"@en .
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P54 ?team .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+
+[PASS ]  #15  [Filter]  List football players from Brazil
+  Rows: 20   Time: 33.64s
+  Sample output:
+    { player='Q4740', playerLabel='Júnior César Moreira da Cunha' }
+    { player='Q10720', playerLabel='Neuton' }
+    { player='Q12897', playerLabel='Pelé' }
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P106 wd:Q937857 .
+      ?player wdt:P27 wd:Q155 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 20
+
+--------------------------------------------------------------------------------
+
+DETAIL — validation probes
+--------------------------------------------------------------------------------
+
+[PASS ]  PROBE-01a
+  Label   : FIFA World Cup — wdt:P3450 (current config, possibly incomplete)
+  Note    : wdt:P3450 = 'sports season of', not all editions have this set
+  Rows    : 20   Time: 0.72s
+  Sample output:
+    { edition='Q101730', editionLabel='1998 FIFA World Cup', winner='Q47774', winnerLabel="France men's national association football team" }
+    { edition='Q101751', editionLabel='1994 FIFA World Cup', winner='Q83459', winnerLabel="Brazil men's national football team" }
+    { edition='Q131075', editionLabel='1954 FIFA World Cup', winner='Q43310', winnerLabel="Germany men's national association football team" }
+  SPARQL:
+    SELECT ?edition ?editionLabel ?winner ?winnerLabel WHERE {
+      ?edition wdt:P3450 wd:Q19317 .
+      ?edition wdt:P1346 ?winner .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    ORDER BY ?edition
+    LIMIT 20
+
+[EMPTY]  PROBE-01b
+  Label   : FIFA World Cup — wdt:P31 (correct pattern per notes.md)
+  Note    : wdt:P31 = 'instance of', covers all tournament editions
+  Rows    : 0   Time: 3.31s
+  Returned 0 rows.
+  SPARQL:
+    SELECT ?edition ?editionLabel ?winner ?winnerLabel WHERE {
+      ?edition wdt:P31 wd:Q19317 .
+      ?edition wdt:P1346 ?winner .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    ORDER BY ?edition
+    LIMIT 20
+
+[PASS ]  PROBE-02a
+  Label   : Olympic gold medalists in athletics — wd:Q15243387 (current config)
+  Note    : config lists Q15243387 as 'Olympic gold medal' — may be wrong QID
+  Rows    : 5   Time: 0.98s
+  Sample output:
+    { athlete='Q24951701', athleteLabel='Chioma Onyekwere' }
+    { athlete='Q234762', athleteLabel='Cathy Freeman' }
+    { athlete='Q270922', athleteLabel='Alice Coachman' }
+  SPARQL:
+    SELECT DISTINCT ?athlete ?athleteLabel WHERE {
+      ?athlete wdt:P166 wd:Q15243387 .
+      ?athlete wdt:P641 wd:Q542 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 10
+
+[EMPTY]  PROBE-02b
+  Label   : Olympic gold medalists in athletics — wd:Q319921 (notes.md suggestion)
+  Note    : Q319921 is 'Olympic gold medal' per notes.md Bug H analysis
+  Rows    : 0   Time: 11.18s
+  Returned 0 rows.
+  SPARQL:
+    SELECT DISTINCT ?athlete ?athleteLabel WHERE {
+      ?athlete wdt:P166 wd:Q319921 .
+      ?athlete wdt:P641 wd:Q542 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 10
+
+[EMPTY]  PROBE-02c
+  Label   : Olympic gold medalists in athletics — P166/P279* pattern (broadest)
+  Note    : Traverse the award hierarchy to catch all Olympic gold medal subclasses
+  Rows    : 0   Time: 0.96s
+  Returned 0 rows.
+  SPARQL:
+    SELECT DISTINCT ?athlete ?athleteLabel WHERE {
+      ?medal wdt:P279* wd:Q319921 .
+      ?athlete wdt:P166 ?medal .
+      ?athlete wdt:P641 wd:Q542 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 10
+
+[PASS ]  PROBE-03a
+  Label   : Manchester City QID wd:Q18602070 — what entity is it?
+  Note    : Config says Q18602070 = Manchester City FC; actual Manchester City is Q503
+  Rows    : 1   Time: 1.15s
+  Sample output:
+    { label='ferrous hexacyanomanganate' }
+  SPARQL:
+    SELECT ?label WHERE {
+      wd:Q18602070 rdfs:label ?label .
+      FILTER(LANG(?label) = "en")
+    }
+    LIMIT 5
+
+[PASS ]  PROBE-03b
+  Label   : Manchester City QID wd:Q503 — correct QID identity check
+  Note    : Q503 is the known-correct Wikidata QID for Manchester City FC
+  Rows    : 1   Time: 0.65s
+  Sample output:
+    { label='banana' }
+  SPARQL:
+    SELECT ?label WHERE {
+      wd:Q503 rdfs:label ?label .
+      FILTER(LANG(?label) = "en")
+    }
+    LIMIT 5
+
+[EMPTY]  PROBE-03c
+  Label   : Manchester City players using wd:Q18602070 (current config)
+  Note    : Do we get actual Man City players with Q18602070?
+  Rows    : 0   Time: 0.91s
+  Returned 0 rows.
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P54 wd:Q18602070 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 10
+
+[EMPTY]  PROBE-03d
+  Label   : Manchester City players using wd:Q503 (correct QID)
+  Note    : Players listed with Q503; compare count vs Q18602070
+  Rows    : 0   Time: 1.15s
+  Returned 0 rows.
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P54 wd:Q503 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 10
+
+[FAIL ]  PROBE-04a
+  Label   : Basketball players — wdt:P641 wd:Q5372 (current config, sport=basketball)
+  Note    : Current config uses sport property instead of occupation
+  Rows    : 0   Time: 60.56s
+  Error: Query timed out (60s limit)
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P641 wd:Q5372 .
+      ?player wdt:P31 wd:Q5 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 10
+
+[FAIL ]  PROBE-04b
+  Label   : Basketball players — wdt:P106 wd:Q3665646 (occupation=basketball player)
+  Note    : Consistent with football (Q937857) and tennis (Q10833314) approach
+  Rows    : 0   Time: 60.72s
+  Error: Query timed out (60s limit)
+  SPARQL:
+    SELECT ?player ?playerLabel WHERE {
+      ?player wdt:P106 wd:Q3665646 .
+      ?player wdt:P31 wd:Q5 .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+    LIMIT 10
+
+[PASS ]  PROBE-05
+  Label   : wd:Q159821 identity — config lists as 'Olympic Games'
+  Note    : Q159821 may actually be the International Olympic Committee, not the Games
+  Rows    : 1   Time: 1.10s
+  Sample output:
+    { label='Summer Olympic Games', desc='major international multi-sport event' }
+  SPARQL:
+    SELECT ?label ?desc WHERE {
+      wd:Q159821 rdfs:label ?label .
+      OPTIONAL { wd:Q159821 schema:description ?desc . FILTER(LANG(?desc) = "en") }
+      FILTER(LANG(?label) = "en")
+    }
+    LIMIT 3
+
+[PASS ]  PROBE-05b
+  Label   : wd:Q8530 identity — possible correct QID for 'Olympic Games'
+  Note    : Q8530 is a candidate for the broader Olympic Games concept
+  Rows    : 1   Time: 0.83s
+  Sample output:
+    { label='Tour Oxygène' }
+  SPARQL:
+    SELECT ?label WHERE {
+      wd:Q8530 rdfs:label ?label .
+      FILTER(LANG(?label) = "en")
+    }
+    LIMIT 3
+
+[PASS ]  PROBE-06a
+  Label   : Messi birthplace via rdfs:label (config pattern verification)
+  Note    : Verifies the label-based lookup pattern from few_shot_examples
+  Rows    : 1   Time: 1.57s
+  Sample output:
+    { birthPlace='Q52535', birthPlaceLabel='Rosario' }
+  SPARQL:
+    SELECT ?birthPlace ?birthPlaceLabel WHERE {
+      ?player rdfs:label "Lionel Messi"@en .
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P19 ?birthPlace .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+
+[PASS ]  PROBE-06b
+  Label   : Mbappe current club via rdfs:label (config pattern verification)
+  Note    : Verifies label-based club lookup; also tests if Mbappe's club is up to date
+  Rows    : 1   Time: 1.13s
+  Sample output:
+    { team='Q8682', teamLabel='Real Madrid Club de Fútbol' }
+  SPARQL:
+    SELECT ?team ?teamLabel WHERE {
+      ?player rdfs:label "Kylian Mbappé"@en .
+      ?player wdt:P31 wd:Q5 .
+      ?player wdt:P54 ?team .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+    }
+
+[PASS ]  PROBE-07
+  Label   : wd:Q10833314 identity — config lists as 'tennis player'
+  Note    : Verify Q10833314 is correct occupation QID for tennis players
+  Rows    : 1   Time: 0.54s
+  Sample output:
+    { label='tennis player' }
+  SPARQL:
+    SELECT ?label WHERE {
+      wd:Q10833314 rdfs:label ?label .
+      FILTER(LANG(?label) = "en")
+    }
+    LIMIT 3
+
+[PASS ]  PROBE-08
+  Label   : wd:Q11774891 identity — config lists as 'ice hockey player'
+  Note    : Verify Q11774891 is correct occupation QID for ice hockey players
+  Rows    : 1   Time: 0.34s
+  Sample output:
+    { label='ice hockey player' }
+  SPARQL:
+    SELECT ?label WHERE {
+      wd:Q11774891 rdfs:label ?label .
+      FILTER(LANG(?label) = "en")
+    }
+    LIMIT 3
+
+[PASS ]  PROBE-09
+  Label   : wd:Q9448 identity — config lists as 'Premier League'
+  Note    : Verify Q9448 is correct QID for English Premier League
+  Rows    : 1   Time: 0.43s
+  Sample output:
+    { label='Premier League' }
+  SPARQL:
+    SELECT ?label WHERE {
+      wd:Q9448 rdfs:label ?label .
+      FILTER(LANG(?label) = "en")
+    }
+    LIMIT 3
+
+--------------------------------------------------------------------------------
+
+FINDINGS & DIAGNOSIS
+--------------------------------------------------------------------------------
+
+FIFA World Cup property (PROBE-01a vs PROBE-01b):
+  wdt:P3450 (current config) returned 20 rows
+  wdt:P31   (notes.md fix)   returned 0 rows
+  FINDING: both return similar counts — either property may work.
+
+Olympic gold medal QID (PROBE-02a/b/c):
+  wd:Q15243387 (current config) returned 5 rows
+  wd:Q319921   (notes.md suggestion) returned 0 rows
+  P279* hierarchy (broadest) returned 0 rows
+  FINDING: Q15243387 works; no immediate change required.
+
+Manchester City QID (PROBE-03a/b/c/d):
+  wd:Q18602070 label: { label='ferrous hexacyanomanganate' }
+  wd:Q503       label: { label='banana' }
+  Players via Q18602070: 0 rows
+  Players via Q503     : 0 rows
+  FINDING: review label output above to confirm which QID is correct.
+
+Basketball player pattern (PROBE-04a vs PROBE-04b):
+  wdt:P641 / sport=basketball (current config): 0 rows
+  wdt:P106 / occupation=basketball player    : 0 rows
+  FINDING: both return results; occupation (P106) preferred for consistency.
+
+Olympic Games entity QID (PROBE-05 / PROBE-05b):
+  wd:Q159821 label: { label='Summer Olympic Games', desc='major international multi-sport event' }
+  wd:Q8530   label: { label='Tour Oxygène' }
+  FINDING: review label above to confirm entity identity.
+
+
+================================================================================
+  End of log — 2026-05-15 19:04:34 UTC
+================================================================================

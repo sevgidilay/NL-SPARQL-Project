@@ -1,0 +1,173 @@
+# Domain Configuration: Diseases (Wikidata)
+# ============================================
+# This file contains all domain-specific information.
+# The code itself is domain-agnostic — it reads everything from here.
+# To add a new domain, just create a new YAML file.
+
+domain_name: "Diseases"
+description: "Biomedical domain covering diseases, symptoms, and treatments on Wikidata"
+keywords:
+  - disease
+  - diseases
+  - illness
+  - symptom
+  - symptoms
+  - treatment
+  - treatments
+  - diagnosis
+  - medicine
+  - medical
+  - virus
+  - bacteria
+  - infection
+  - cancer
+  - diabetes
+  - disorder
+  - syndrome
+  - cure
+  - drug
+  - vaccine
+
+endpoint: "https://query.wikidata.org/sparql"
+
+prefixes: |
+  PREFIX wd: <http://www.wikidata.org/entity/>
+  PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX schema: <http://schema.org/>
+
+ontology_hints: |
+  Key Wikidata properties for diseases:
+  - wdt:P31 = "instance of" (use with wd:Q12136 for diseases)
+  - wdt:P279 = "subclass of" (useful with * for transitive queries)
+  - wdt:P780 = "symptoms and signs"
+  - wdt:P2176 = "drug or therapy used for treatment"
+  - wdt:P828 = "has cause"
+  - wdt:P1995 = "health specialty"
+  - wdt:P699 = "Disease Ontology ID"
+  - wdt:P494 = "ICD-10 code"
+  
+  Key entities:
+  - wd:Q12136 = "disease"
+  - wd:Q3286546 = "respiratory disease"
+  - wd:Q18123741 = "infectious agent"
+  - wd:Q12140 = "medication"
+  - wd:Q10876 = "bacterium"
+  
+  IMPORTANT: Wikidata rarely uses "anatomical location" (P927) for diseases.
+  To find diseases affecting a body part, use subclass relationships instead.
+  For example, respiratory diseases are subclasses of wd:Q3392756.
+
+few_shot_examples:
+  - question: "List 10 diseases"
+    tag: "Simple"
+    sparql: |
+      SELECT DISTINCT ?disease ?diseaseLabel WHERE {
+        ?disease wdt:P31 wd:Q12136 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 10
+
+  - question: "What are the symptoms of diabetes?"
+    tag: "Lookup"
+    sparql: |
+      SELECT DISTINCT ?symptom ?symptomLabel WHERE {
+        wd:Q12206 wdt:P780 ?symptom .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "Which drugs are used to treat malaria?"
+    tag: "Lookup"
+    sparql: |
+      SELECT DISTINCT ?drug ?drugLabel WHERE {
+        wd:Q12156 wdt:P2176 ?drug .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "List diseases and their treatments"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?disease ?diseaseLabel ?drug ?drugLabel WHERE {
+        ?disease wdt:P31 wd:Q12136 .
+        ?disease wdt:P2176 ?drug .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "List respiratory diseases"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?disease ?diseaseLabel WHERE {
+        ?disease wdt:P31 wd:Q12136 .              # must be a disease
+        ?disease wdt:P279* wd:Q3286546 .          # related to respiratory disease
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "List diseases with their ICD-10 codes"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?disease ?diseaseLabel ?icd WHERE {
+        ?disease wdt:P31 wd:Q12136 .
+        ?disease wdt:P494 ?icd .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "Which diseases are caused by bacteria?"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?disease ?diseaseLabel WHERE {
+        ?disease wdt:P31 wd:Q12136 .
+
+        {
+          ?disease wdt:P279* wd:Q18553247 .   # classified bacterial
+        }
+        UNION
+        {
+          ?disease wdt:P828 ?agent .          # has cause
+          ?agent wdt:P31/wdt:P279* wd:Q10876 .
+        }
+
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "Find diseases that have both symptoms and treatments listed"
+    tag: "Join"
+    sparql: |
+      SELECT DISTINCT ?disease ?diseaseLabel ?symptom ?symptomLabel ?drug ?drugLabel WHERE {
+        ?disease wdt:P31 wd:Q12136 .
+        ?disease wdt:P780 ?symptom .
+        ?disease wdt:P2176 ?drug .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+  - question: "List diseases excluding cancer"
+    tag: "Filter"
+    sparql: |
+      SELECT ?disease ?diseaseLabel WHERE {
+        ?disease wdt:P31 wd:Q12136 .
+        FILTER NOT EXISTS { ?disease rdfs:label "cancer"@en . }
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      LIMIT 20
+
+example_questions:
+  - question: "List 10 diseases"
+    tag: "Simple"
+  - question: "What are the symptoms of diabetes?"
+    tag: "Lookup"
+  - question: "Which drugs are used to treat malaria?"
+    tag: "Lookup"
+  - question: "List respiratory diseases"
+    tag: "Filter"
+  - question: "Which diseases are caused by bacteria?"
+    tag: "Join"
+  - question: "List diseases with their ICD-10 codes"
+    tag: "Join"
+  - question: "Find diseases that have both symptoms and treatments listed"
+    tag: "Join"
+  - question: "Count diseases by health specialty"
+    tag: "Aggregate"

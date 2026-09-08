@@ -1,0 +1,221 @@
+# Domain Configuration: Astronomy (Wikidata)
+# =============================================
+# Astronomical objects: planets, stars, galaxies, moons, exoplanets.
+
+domain_name: "Astronomy (Wikidata)"
+description: "Astronomical domain: planets, stars, galaxies, and celestial bodies"
+keywords:
+  - planet
+  - planets
+  - star
+  - stars
+  - galaxy
+  - galaxies
+  - asteroid
+  - asteroids
+  - moon
+  - moons
+  - comet
+  - comets
+  - exoplanet
+  - exoplanets
+  - solar system
+  - constellation
+  - constellations
+  - nebula
+  - nebulae
+  - telescope
+  - orbit
+  - celestial
+
+endpoint: "https://query.wikidata.org/sparql"
+
+prefixes: |
+  PREFIX wd: <http://www.wikidata.org/entity/>
+  PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+ontology_hints: |
+  Key Wikidata properties for astronomy:
+  - wdt:P31 = "instance of"
+  - wdt:P59 = "constellation"
+  - wdt:P397 = "parent astronomical body"
+  - wdt:P398 = "child astronomical body"
+  - wdt:P2051 = "mass"
+  - wdt:P2067 = "radius"
+  - wdt:P2583 = "distance from Earth"
+  - wdt:P575 = "time of discovery"
+  - wdt:P61 = "discoverer or inventor"
+  - wdt:P6879 = "effective temperature"
+  - wdt:P2216 = "orbital period"
+
+  Key entities:
+  - wd:Q634 = "planet" (DO NOT use wdt:P31 wd:Q634 — Solar System planets use more specific subtypes and this returns 0 results)
+  - wd:Q44559 = "exoplanet"
+  - wd:Q523 = "star"
+  - wd:Q318 = "galaxy"
+  - wd:Q3863 = "asteroid"
+  - wd:Q25257 = "moon (natural satellite)"
+  - wd:Q8928 = "constellation" (IAU constellation — use wdt:P31 wd:Q8928 to list constellations)
+  - wd:Q3559 = "comet" (use wdt:P31/wdt:P279* wd:Q3559 to match all comet subtypes)
+  - wd:Q42372 = "nebula" (use wdt:P31/wdt:P279* wd:Q42372 to match all nebula subtypes)
+  - wd:Q544 = "Solar System"
+  - wd:Q525 = "Sun"
+  - wd:Q319 = "Jupiter", wd:Q2 = "Earth", wd:Q308 = "Mercury", wd:Q313 = "Venus"
+  - wd:Q111 = "Mars", wd:Q193 = "Saturn", wd:Q324 = "Uranus", wd:Q332 = "Neptune"
+  - wd:Q5 = "human" (use with wdt:P61 to find human discoverers)
+
+  IMPORTANT — Labels:
+  - Many astronomical objects (galaxies, asteroids, exoplanets) have no English label in Wikidata
+  - Using SERVICE wikibase:label alone causes those rows to be silently dropped from results
+  - ALWAYS filter for English labels using: ?item rdfs:label ?itemLabel . FILTER(LANG(?itemLabel) = "en")
+  - This ensures only objects with real names are returned instead of empty results
+
+  IMPORTANT — Solar System planets:
+  - NEVER use wdt:P31 wd:Q634 alone — Solar System planets use specific subtypes and this returns 0 results
+  - NEVER use wdt:P397 wd:Q525 alone — this returns 100k+ objects (asteroids, comets, spacecraft)
+  - ALWAYS combine both: ?planet wdt:P31/wdt:P279* wd:Q634 . ?planet wdt:P397 wd:Q525
+  - The property path wdt:P31/wdt:P279* traverses subclass chains and correctly matches planet subtypes
+
+few_shot_examples:
+  - question: "List all planets in our Solar System"
+    tag: "Simple"
+    sparql: |
+      SELECT DISTINCT ?planet ?planetLabel WHERE {
+        ?planet wdt:P31/wdt:P279* wd:Q634 .
+        ?planet wdt:P397 wd:Q525 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "List 10 exoplanets with their discovery dates"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?planet ?planetLabel ?discovered WHERE {
+        ?planet wdt:P31 wd:Q44559 .
+        ?planet wdt:P575 ?discovered .
+        ?planet rdfs:label ?planetLabel .
+        FILTER(LANG(?planetLabel) = "en")
+      }
+      LIMIT 10
+
+  - question: "Which moons orbit Jupiter?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?moon ?moonLabel WHERE {
+        ?moon wdt:P397 wd:Q319 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "List 10 galaxies"
+    tag: "Simple"
+    sparql: |
+      SELECT DISTINCT ?galaxy ?galaxyLabel WHERE {
+        ?galaxy wdt:P31 wd:Q318 .
+        ?galaxy rdfs:label ?galaxyLabel .
+        FILTER(LANG(?galaxyLabel) = "en")
+      }
+      LIMIT 10
+
+  - question: "Find stars discovered before 1900"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?star ?starLabel ?date WHERE {
+        ?star wdt:P31 wd:Q523 .
+        ?star wdt:P575 ?date .
+        ?star rdfs:label ?starLabel .
+        FILTER(YEAR(?date) < 1900)
+        FILTER(LANG(?starLabel) = "en")
+      }
+      LIMIT 20
+
+  - question: "List constellations"
+    tag: "Simple"
+    sparql: |
+      SELECT ?constellation ?constellationLabel WHERE {
+        ?constellation wdt:P31 wd:Q8928 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      ORDER BY ?constellationLabel
+      LIMIT 20
+
+  - question: "List asteroids and their discovery dates"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?asteroid ?asteroidLabel ?date WHERE {
+        ?asteroid wdt:P31 wd:Q3863 .
+        ?asteroid wdt:P575 ?date .
+        ?asteroid rdfs:label ?asteroidLabel .
+        FILTER(LANG(?asteroidLabel) = "en")
+      }
+      LIMIT 20
+
+  - question: "Which astronomer discovered the most asteroids?"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?astronomer ?astronomerLabel (COUNT(?asteroid) AS ?count) WHERE {
+        ?asteroid wdt:P31 wd:Q3863 .
+        ?asteroid wdt:P61 ?astronomer .
+        ?astronomer wdt:P31 wd:Q5 .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      GROUP BY ?astronomer ?astronomerLabel
+      ORDER BY DESC(?count)
+      LIMIT 10
+
+  - question: "List 10 comets with their discovery dates"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?comet ?cometLabel ?discovered WHERE {
+        ?comet wdt:P31/wdt:P279* wd:Q3559 .
+        ?comet wdt:P575 ?discovered .
+        ?comet rdfs:label ?cometLabel .
+        FILTER(LANG(?cometLabel) = "en")
+      }
+      LIMIT 10
+
+  - question: "List 10 nebulae"
+    tag: "Simple"
+    sparql: |
+      SELECT DISTINCT ?nebula ?nebulaLabel WHERE {
+        ?nebula wdt:P31/wdt:P279* wd:Q42372 .
+        ?nebula rdfs:label ?nebulaLabel .
+        FILTER(LANG(?nebulaLabel) = "en")
+      }
+      LIMIT 10
+
+  - question: "Which stars have the most exoplanets?"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?star ?starLabel (COUNT(?planet) AS ?count) WHERE {
+        ?planet wdt:P31 wd:Q44559 .
+        ?planet wdt:P397 ?star .
+        ?star rdfs:label ?starLabel .
+        FILTER(LANG(?starLabel) = "en")
+      }
+      GROUP BY ?star ?starLabel
+      ORDER BY DESC(?count)
+      LIMIT 10
+
+example_questions:
+  - question: "List all planets in our Solar System"
+    tag: "Simple"
+  - question: "List 10 galaxies"
+    tag: "Simple"
+  - question: "Which moons orbit Jupiter?"
+    tag: "Lookup"
+  - question: "List 10 exoplanets with their discovery dates"
+    tag: "Filter"
+  - question: "Find stars discovered before 1900"
+    tag: "Filter"
+  - question: "List asteroids and their discovery dates"
+    tag: "Filter"
+  - question: "List constellations"
+    tag: "Simple"
+  - question: "Which astronomer discovered the most asteroids?"
+    tag: "Aggregate"
+  - question: "List 10 comets with their discovery dates"
+    tag: "Filter"
+  - question: "List 10 nebulae"
+    tag: "Simple"
+  - question: "Which stars have the most exoplanets?"
+    tag: "Aggregate"

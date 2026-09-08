@@ -1,0 +1,167 @@
+==================================================================================
+  Knowledge Graph Correctness Benchmark
+  Run at    : 2026-05-01 19:54:00 UTC
+==================================================================================
+
+SUMMARY
+----------------------------------------------------------------------------------
+  Total test cases     : 12
+  PASS  (all checks ok): 12
+  EMPTY (0 rows)       : 0
+  FAIL  (exec error)   : 0
+  TTL_FAIL (bad export): 0
+  LABEL_BUG (URI label): 0
+  MODE_MISMATCH        : 0
+  Accuracy             : 100.0%  (12/12 fully passing)
+  Avg response         : 2.41s
+
+CHECKS EXPLAINED
+----------------------------------------------------------------------------------
+  PASS        — query returned rows, TTL export valid, labels are readable
+                text, KG mode correctly detected, no URI-as-label bugs.
+  EMPTY       — SPARQL executed but returned 0 rows.
+  FAIL        — SPARQL endpoint returned an error.
+  TTL_FAIL    — Query returned rows but rdflib could not parse the exported
+                Turtle, or build_turtle_export raised an exception.
+  LABEL_BUG   — At least one rdfs:label in the TTL contains a raw URI
+                (e.g. http://www.wikidata.org/entity/Q...) instead of text.
+  MODE_MISMATCH — Detected KG mode (star/relational) differs from expected.
+
+DETAIL
+----------------------------------------------------------------------------------
+
+[PASS        ]  KG-01  [star]  Scientists (Wikidata)
+  Question    : List 10 scientists
+  Rows        : 10   Time: 0.51s
+  URI cols    : ['scientist']
+  Label cols  : ['scientistLabel']  (has_labels=True)
+  KG mode     : expected=star  detected=star  OK
+  TTL valid   : True
+  TTL stats   : ~75 lines  11 individuals  10 relation triples
+  Labels ok   : True
+  Center label: 'Scientists'  OK
+
+[PASS        ]  KG-02  [star]  Astronomy (Wikidata)
+  Question    : List planets in our Solar System
+  Rows        : 7   Time: 0.44s
+  URI cols    : ['planet']
+  Label cols  : ['planetLabel']  (has_labels=True)
+  KG mode     : expected=star  detected=star  OK
+  TTL valid   : True
+  TTL stats   : ~60 lines  8 individuals  7 relation triples
+  Labels ok   : True
+  Center label: 'Planets'  OK
+
+[PASS        ]  KG-03  [star]  Philosophy (Wikidata)
+  Question    : List 10 philosophers
+  Rows        : 10   Time: 5.29s
+  URI cols    : ['philosopher']
+  Label cols  : ['philosopherLabel']  (has_labels=True)
+  KG mode     : expected=star  detected=star  OK
+  TTL valid   : True
+  TTL stats   : ~75 lines  11 individuals  10 relation triples
+  Labels ok   : True
+  Center label: 'Philosophers'  OK
+
+[PASS        ]  KG-04  [star]  Diseases (Wikidata)
+  Question    : List 10 diseases
+  Rows        : 10   Time: 0.43s
+  URI cols    : ['disease']
+  Label cols  : ['diseaseLabel']  (has_labels=True)
+  KG mode     : expected=star  detected=star  OK
+  TTL valid   : True
+  TTL stats   : ~75 lines  11 individuals  10 relation triples
+  Labels ok   : True
+  Center label: 'Diseases'  OK
+
+[PASS        ]  KG-05  [star]  Sports (Wikidata)
+  Question    : List 10 football players
+  Rows        : 10   Time: 0.36s
+  URI cols    : ['player']
+  Label cols  : ['playerLabel']  (has_labels=True)
+  KG mode     : expected=star  detected=star  OK
+  TTL valid   : True
+  TTL stats   : ~75 lines  11 individuals  10 relation triples
+  Labels ok   : True
+  Center label: 'Players'  OK
+
+[PASS        ]  KG-06  [star]  Books (Wikidata)
+  Question    : List 10 novels
+  Rows        : 9   Time: 3.80s
+  URI cols    : ['novel']
+  Label cols  : ['novelLabel']  (has_labels=True)
+  KG mode     : expected=star  detected=star  OK
+  TTL valid   : True
+  TTL stats   : ~70 lines  10 individuals  9 relation triples
+  Labels ok   : True
+  Center label: 'Novels'  OK
+
+[PASS        ]  KG-07  [star]  Movies (DBpedia)
+  Question    : List 10 movies
+  Rows        : 10   Time: 4.68s
+  URI cols    : ['film']
+  Label cols  : ['name']  (has_labels=True)
+  KG mode     : expected=star  detected=star  OK
+  TTL valid   : True
+  TTL stats   : ~74 lines  11 individuals  10 relation triples
+  Labels ok   : True
+  Center label: 'Films'  OK
+
+[PASS        ]  KG-08  [relational]  Geography (Wikidata)
+  Question    : Countries and their capitals
+  Rows        : 20   Time: 1.05s
+  URI cols    : ['country', 'capital']
+  Label cols  : ['capitalLabel', 'countryLabel']  (has_labels=True)
+  KG mode     : expected=relational  detected=relational  OK
+  TTL valid   : True
+  TTL stats   : ~201 lines  40 individuals  20 relation triples
+  Labels ok   : True
+  Edge dedup  :  No duplicate edges
+
+[PASS        ]  KG-09  [relational]  Scientists (Wikidata)
+  Question    : Female Nobel Prize laureates and their awards
+  Rows        : 18   Time: 0.60s
+  URI cols    : ['award', 'laureate']
+  Label cols  : ['awardLabel', 'laureateLabel']  (has_labels=True)
+  KG mode     : expected=relational  detected=relational  OK
+  TTL valid   : True
+  TTL stats   : ~123 lines  21 individuals  18 relation triples
+  Labels ok   : True
+  Edge dedup  :  No duplicate edges
+
+[PASS        ]  KG-10  [relational]  Philosophy (Wikidata)
+  Question    : Philosophers and who influenced them
+  Rows        : 20   Time: 1.77s
+  URI cols    : ['philosopher', 'influence']
+  Label cols  : ['influenceLabel', 'philosopherLabel']  (has_labels=True)
+  KG mode     : expected=relational  detected=relational  OK
+  TTL valid   : True
+  TTL stats   : ~121 lines  20 individuals  20 relation triples
+  Labels ok   : True
+  Edge dedup  :  No duplicate edges
+
+[PASS        ]  KG-11  [relational]  Diseases (Wikidata)
+  Question    : Diseases and their treatments
+  Rows        : 20   Time: 8.28s
+  URI cols    : ['disease', 'drug']
+  Label cols  : ['diseaseLabel', 'drugLabel']  (has_labels=True)
+  KG mode     : expected=relational  detected=relational  OK
+  TTL valid   : True
+  TTL stats   : ~141 lines  25 individuals  20 relation triples
+  Labels ok   : True
+  Edge dedup  :  No duplicate edges
+
+[PASS        ]  KG-12  [star]  Movies (DBpedia)
+  Question    : Movies directed by Steven Spielberg
+  Rows        : 15   Time: 1.73s
+  URI cols    : ['film']
+  Label cols  : ['name']  (has_labels=True)
+  KG mode     : expected=star  detected=star  OK
+  TTL valid   : True
+  TTL stats   : ~99 lines  16 individuals  15 relation triples
+  Labels ok   : True
+  Center label: 'Films'  OK
+
+==================================================================================
+  End of log — 2026-05-01 19:54:00 UTC
+==================================================================================

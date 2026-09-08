@@ -1,0 +1,21 @@
+.env
+
+__pycache__/
+
+*.pyc
+
+.DS_Store
+
+venv/
+
+.venv/
+fixes.md
+PLAN.md
+BUG_REPORT.md
+.claude/
+report/main.bbl-SAVE-ERROR
+report/main.bcf-SAVE-ERROR
+report/saif_commits.txt
+
+# Streamlit secrets
+.streamlit/secrets.toml

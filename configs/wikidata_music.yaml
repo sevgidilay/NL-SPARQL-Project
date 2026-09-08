@@ -1,0 +1,198 @@
+# Domain Configuration: Music (Wikidata)
+# ========================================
+# Artists, bands, albums, songs, and genres from Wikidata.
+
+domain_name: "Music (Wikidata)"
+description: "Music domain: artists, bands, albums, songs, and genres"
+keywords:
+  - musician
+  - musicians
+  - band
+  - bands
+  - album
+  - albums
+  - song
+  - songs
+  - singer
+  - singers
+  - composer
+  - composers
+  - pianist
+  - pianists
+  - guitarist
+  - guitarists
+  - jazz
+  - rock
+  - genre
+  - record label
+  - concert
+
+endpoint: "https://query.wikidata.org/sparql"
+
+prefixes: |
+  PREFIX wd: <http://www.wikidata.org/entity/>
+  PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+ontology_hints: |
+  Key Wikidata properties for music:
+  - wdt:P31 = "instance of"
+  - wdt:P136 = "genre"
+  - wdt:P175 = "performer"
+  - wdt:P86 = "composer"
+  - wdt:P264 = "record label"
+  - wdt:P577 = "publication date"
+  - wdt:P1303 = "instrument played"
+  - wdt:P463 = "member of (band/group)"
+  - wdt:P495 = "country of origin"
+  - wdt:P569 = "date of birth"
+  - wdt:P27 = "country of citizenship"
+
+  Key entities:
+  - wd:Q482994 = "album"
+  - wd:Q7366 = "song"
+  - wd:Q215380 = "musical group / band"
+  - wd:Q5741069 = "rock band"
+  - wd:Q639669 = "musician"
+  - wd:Q188451 = "music genre"
+  - wd:Q11399 = "rock music"
+  - wd:Q8341 = "jazz"
+  - wd:Q9730 = "classical music"
+  - wd:Q37073 = "pop music"
+  - wd:Q83440 = "country music"
+  - wd:Q5994 = "piano" (use with wdt:P1303 to find pianists)
+  - wd:Q6607 = "guitar" (use with wdt:P1303 to find guitarists)
+
+few_shot_examples:
+  - question: "List 10 musicians"
+    tag: "Simple"
+    sparql: |
+      SELECT ?musician ?musicianLabel WHERE {
+        ?musician wdt:P106 wd:Q639669 .
+        ?musician rdfs:label ?musicianLabel .
+        FILTER(LANG(?musicianLabel) = "en")
+      }
+      LIMIT 10
+
+  - question: "List albums released by The Beatles"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?album ?albumLabel ?date WHERE {
+        ?album wdt:P31 wd:Q482994 .
+        ?album wdt:P175 wd:Q1299 .
+        ?album rdfs:label ?albumLabel .
+        FILTER(LANG(?albumLabel) = "en")
+        OPTIONAL { ?album wdt:P577 ?date . }
+      }
+      ORDER BY ?date
+
+  - question: "List 10 rock bands"
+    tag: "Filter"
+    sparql: |
+      SELECT ?band ?bandLabel WHERE {
+        ?band wdt:P31 wd:Q5741069 .
+        ?band rdfs:label ?bandLabel .
+        FILTER(LANG(?bandLabel) = "en")
+      }
+      LIMIT 10
+
+  - question: "Who are the members of Radiohead?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?member ?memberLabel WHERE {
+        ?member wdt:P463 wd:Q44190 .
+        ?member rdfs:label ?memberLabel .
+        FILTER(LANG(?memberLabel) = "en")
+      }
+
+  - question: "List jazz musicians born before 1920"
+    tag: "Filter"
+    sparql: |
+      SELECT ?musician ?musicianLabel ?birth WHERE {
+        ?musician wdt:P106 wd:Q639669 .
+        ?musician wdt:P136 wd:Q8341 .
+        ?musician wdt:P569 ?birth .
+        FILTER(YEAR(?birth) < 1920)
+        ?musician rdfs:label ?musicianLabel .
+        FILTER(LANG(?musicianLabel) = "en")
+      }
+      LIMIT 20
+
+  - question: "List songs composed by Mozart"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?work ?workLabel WHERE {
+        ?work wdt:P86 wd:Q254 .
+        ?work rdfs:label ?workLabel .
+        FILTER(LANG(?workLabel) = "en")
+      }
+      LIMIT 20
+
+  - question: "List 10 pianists"
+    tag: "Simple"
+    sparql: |
+      SELECT ?person ?personLabel WHERE {
+        ?person wdt:P1303 wd:Q5994 .
+        ?person wdt:P31 wd:Q5 .
+        ?person rdfs:label ?personLabel .
+        FILTER(LANG(?personLabel) = "en")
+      }
+      LIMIT 10
+
+  - question: "List 10 guitarists"
+    tag: "Simple"
+    sparql: |
+      SELECT ?person ?personLabel WHERE {
+        ?person wdt:P1303 wd:Q6607 .
+        ?person wdt:P31 wd:Q5 .
+        ?person rdfs:label ?personLabel .
+        FILTER(LANG(?personLabel) = "en")
+      }
+      LIMIT 10
+
+  - question: "List 10 record labels and the artists signed to them"
+    tag: "Join"
+    sparql: |
+      SELECT ?label ?labelLabel ?artist ?artistLabel WHERE {
+        ?artist wdt:P106 wd:Q639669 .
+        ?artist wdt:P264 ?label .
+        ?artist rdfs:label ?artistLabel .
+        FILTER(LANG(?artistLabel) = "en")
+        ?label rdfs:label ?labelLabel .
+        FILTER(LANG(?labelLabel) = "en")
+      }
+      LIMIT 10
+
+  - question: "Count musicians by genre"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?genre ?genreLabel (COUNT(?musician) AS ?count) WHERE {
+        VALUES ?genre { wd:Q11399 wd:Q8341 wd:Q9730 wd:Q37073 wd:Q83440 wd:Q7749 }
+        ?musician wdt:P106 wd:Q639669 .
+        ?musician wdt:P136 ?genre .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      GROUP BY ?genre ?genreLabel
+      ORDER BY DESC(?count)
+
+example_questions:
+  - question: "List 10 musicians"
+    tag: "Simple"
+  - question: "List 10 pianists"
+    tag: "Simple"
+  - question: "List 10 guitarists"
+    tag: "Simple"
+  - question: "List 10 rock bands"
+    tag: "Filter"
+  - question: "List albums released by The Beatles"
+    tag: "Lookup"
+  - question: "Who are the members of Radiohead?"
+    tag: "Lookup"
+  - question: "List songs composed by Mozart"
+    tag: "Lookup"
+  - question: "List jazz musicians born before 1920"
+    tag: "Filter"
+  - question: "List record labels and the artists signed to them"
+    tag: "Join"
+  - question: "Count musicians by genre"
+    tag: "Aggregate"

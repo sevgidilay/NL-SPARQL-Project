@@ -1,0 +1,377 @@
+# Domain Configuration: Sports (Wikidata)
+# ==========================================
+# Athletes, teams, competitions, and sports records.
+
+domain_name: "Sports (Wikidata)"
+description: "Sports domain: athletes, teams, competitions, and records"
+keywords:
+  - athlete
+  - athletes
+  - player
+  - players
+  - sport
+  - sports
+  - football
+  - soccer
+  - hockey
+  - ice hockey
+  - archer
+  - archers
+  - archery
+  - tennis
+  - basketball
+  - olympic
+  - olympics
+  - FIFA
+  - championship
+  - tournament
+  - team
+  - teams
+  - coach
+  - stadium
+  - league
+
+endpoint: "https://query.wikidata.org/sparql"
+
+prefixes: |
+  PREFIX wd: <http://www.wikidata.org/entity/>
+  PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+ontology_hints: |
+  Key Wikidata properties for sports:
+  - wdt:P31 = "instance of"
+  - wdt:P106 = "occupation"
+  - wdt:P641 = "sport"
+  - wdt:P54 = "member of sports team"
+  - wdt:P413 = "position played on team"
+  - wdt:P1346 = "winner"
+  - wdt:P3450 = "sports season of league or competition" (ONLY for league/cup editions, e.g. FIFA World Cup editions — do NOT use for Olympic Games)
+  - wdt:P166 = "award received"
+  - wdt:P569 = "date of birth"
+  - wdt:P27 = "country of citizenship"
+  - wdt:P19 = "place of birth"
+  - wdt:P118 = "league"
+  - wdt:P17 = "country"
+  - wdt:P276 = "location / host city" (use for event venues, stadiums, host cities)
+  - wdt:P585 = "point in time" (use for one-time events to filter by year)
+  - wdt:P31 = "instance of" (use to find editions of a recurring event, e.g. ?edition wdt:P31 wd:Q159940 for Summer Olympics editions)
+
+  Key entities — sport types:
+  - wd:Q2066131 = "athlete"
+  - wd:Q937857 = "association football player" (use with wdt:P106 for football/soccer players)
+  - wd:Q476028 = "association football club"
+  - wd:Q2736 = "association football (soccer)"
+  - wd:Q41466 = "ice hockey"
+  - wd:Q11774891 = "ice hockey player"
+  - wd:Q108429 = "archery"
+  - wd:Q13382355 = "archer" (sportsperson taking part in archery competitions)
+  - wd:Q847 = "tennis"
+  - wd:Q10833314 = "tennis player" (use with wdt:P106 for tennis players)
+  - wd:Q5372 = "basketball"
+  - wd:Q3665646 = "basketball player"
+  - wd:Q542 = "athletics (track and field)"
+  - wd:Q5 = "human" (always include wdt:P31 wd:Q5 when querying for people)
+
+  Key entities — competitions:
+  - wd:Q19317 = "FIFA World Cup" (the tournament class; editions are instances of this)
+  - wd:Q15243387 = "Olympic gold medal"
+  - wd:Q159821 = "Olympic Games" (the general concept — do NOT use with wdt:P3450)
+  - wd:Q159940 = "Summer Olympic Games" (the recurring series — use with wdt:P31 to find editions)
+  - wd:Q26132 = "Winter Olympic Games" (the recurring series — use with wdt:P31 to find editions)
+  - wd:Q9448 = "Premier League (English football)"
+
+  OLYMPIC GAMES PATTERN (how to query for specific editions):
+  - To find Summer Olympics editions: ?edition wdt:P31 wd:Q159940 .
+  - To filter by year: ?edition wdt:P585 ?date . FILTER(YEAR(?date) = 2008)
+  - To get host city: ?edition wdt:P276 ?hostCity .  (NOT wdt:P17 which gives country)
+
+  Key entities — verified clubs:
+  - wd:Q7156 = "FC Barcelona"
+  - wd:Q8682 = "Real Madrid Club de Fútbol"
+  - wd:Q18656 = "Manchester United F.C."
+  - wd:Q50602 = "Manchester City F.C."
+  - wd:Q9617 = "Arsenal F.C."
+  - wd:Q9616 = "Chelsea F.C."
+  - wd:Q71 = "Geneva"
+
+  Key entities — verified countries (for wdt:P27 / citizenship):
+  - wd:Q30 = "United States"
+  - wd:Q142 = "France"
+  - wd:Q145 = "United Kingdom"
+  - wd:Q183 = "Germany"
+  - wd:Q38 = "Italy"
+  - wd:Q29 = "Spain"
+  - wd:Q155 = "Brazil"
+  - wd:Q736 = "Argentina"
+  - wd:Q45 = "Portugal"
+  - wd:Q43 = "Turkey"
+
+  ENTITY ID RULES — avoid hallucination:
+  - ONLY use the QIDs listed above — do NOT guess QIDs for players, athletes, or teams
+    not in the verified list above.
+  - For any named person or team NOT in the verified list, use rdfs:label matching:
+      ?player rdfs:label "Lionel Messi"@en .
+  - Never write wd:QXXXXX for an entity you are not certain about.
+  - For very broad "list players" queries, use SERVICE bd:sample with an explicit
+    sample limit and final LIMIT to avoid Wikidata Query Service timeouts.
+
+few_shot_examples:
+  - question: "List 10 football players"
+    tag: "Simple"
+    sparql: |
+      SELECT ?player ?playerLabel WHERE {
+        SERVICE bd:sample {
+          ?player wdt:P106 wd:Q937857 .
+          bd:serviceParam bd:sample.limit 30 .
+        }
+        ?player wdt:P31 wd:Q5 ;
+                rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+      }
+      ORDER BY ?player
+      LIMIT 10
+
+  - question: "List 10 tennis players"
+    tag: "Simple"
+    sparql: |
+      SELECT ?player ?playerLabel WHERE {
+        SERVICE bd:sample {
+          ?player wdt:P106 wd:Q10833314 .
+          bd:serviceParam bd:sample.limit 30 .
+        }
+        ?player wdt:P31 wd:Q5 ;
+                rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+      }
+      ORDER BY ?player
+      LIMIT 10
+
+  - question: "List 10 basketball players"
+    tag: "Simple"
+    sparql: |
+      SELECT ?player ?playerLabel WHERE {
+        SERVICE bd:sample {
+          ?player wdt:P641 wd:Q5372 .
+          bd:serviceParam bd:sample.limit 30 .
+        }
+        ?player wdt:P31 wd:Q5 ;
+                rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+      }
+      ORDER BY ?player
+      LIMIT 10
+
+  - question: "List hockey players from Geneva"
+    tag: "Filter"
+    sparql: |
+      SELECT ?player ?playerLabel WHERE {
+        ?player wdt:P31 wd:Q5 .
+        ?player wdt:P106 wd:Q11774891 .
+        ?player wdt:P19 wd:Q71 .
+        ?player rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+      }
+      ORDER BY ?player
+      LIMIT 20
+
+  - question: "List hockey players from Turkey"
+    tag: "Filter"
+    sparql: |
+      SELECT ?player ?playerLabel WHERE {
+        ?player wdt:P31 wd:Q5 .
+        ?player wdt:P106 wd:Q11774891 .
+        ?player wdt:P27 wd:Q43 .
+        ?player rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+      }
+      ORDER BY ?player
+      LIMIT 10
+
+  - question: "Find 10 archers from Turkey"
+    tag: "Filter"
+    sparql: |
+      SELECT ?player ?playerLabel WHERE {
+        ?player wdt:P31 wd:Q5 .
+        ?player wdt:P106 wd:Q13382355 .
+        ?player wdt:P27 wd:Q43 .
+        ?player rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+      }
+      ORDER BY ?player
+      LIMIT 10
+
+  - question: "List players who were members of FC Barcelona"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?player ?playerLabel WHERE {
+        ?player wdt:P31 wd:Q5 .
+        ?player wdt:P54 wd:Q7156 .
+        ?player rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+      }
+      ORDER BY ?player
+      LIMIT 20
+
+  - question: "List players who were members of Real Madrid"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?player ?playerLabel WHERE {
+        ?player wdt:P31 wd:Q5 .
+        ?player wdt:P54 wd:Q8682 .
+        ?player rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+      }
+      ORDER BY ?player
+      LIMIT 20
+
+  - question: "Who won the FIFA World Cup?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?edition ?editionLabel ?winner ?winnerLabel WHERE {
+        ?edition wdt:P3450 wd:Q19317 .
+        ?edition wdt:P1346 ?winner .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+      ORDER BY ?edition
+
+  - question: "List tennis players from the United States"
+    tag: "Filter"
+    sparql: |
+      SELECT ?player ?playerLabel WHERE {
+        ?player wdt:P106 wd:Q10833314 .
+        ?player wdt:P31 wd:Q5 .
+        ?player wdt:P27 wd:Q30 .
+        ?player rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+      }
+      ORDER BY ?player
+      LIMIT 20
+
+  - question: "List basketball players born after 1990"
+    tag: "Filter"
+    sparql: |
+      SELECT ?player ?playerLabel ?birth WHERE {
+        ?player wdt:P641 wd:Q5372 .
+        ?player wdt:P31 wd:Q5 .
+        ?player wdt:P569 ?birth .
+        ?player rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+        FILTER(YEAR(?birth) > 1990)
+      }
+      ORDER BY ?player
+      LIMIT 20
+
+  - question: "List Olympic gold medalists in athletics"
+    tag: "Filter"
+    sparql: |
+      SELECT DISTINCT ?athlete ?athleteLabel WHERE {
+        ?athlete wdt:P166 wd:Q15243387 .
+        ?athlete wdt:P641 wd:Q542 .
+        ?athlete rdfs:label ?athleteLabel .
+        FILTER(LANG(?athleteLabel) = "en")
+      }
+      ORDER BY ?athlete
+      LIMIT 20
+
+  - question: "List football clubs in the English Premier League"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?club ?clubLabel WHERE {
+        ?club wdt:P31 wd:Q476028 .
+        ?club wdt:P118 wd:Q9448 .
+        ?club wdt:P17 wd:Q145 .
+        ?club rdfs:label ?clubLabel .
+        FILTER(LANG(?clubLabel) = "en")
+      }
+      ORDER BY ?clubLabel
+
+  - question: "Count athletes by sport"
+    tag: "Aggregate"
+    sparql: |
+      SELECT ?sport ?sportLabel (COUNT(?athlete) AS ?count) WHERE {
+        VALUES ?sport { wd:Q2736 wd:Q41466 wd:Q847 wd:Q5372 wd:Q542 }
+        ?athlete wdt:P31 wd:Q5 .
+        ?athlete wdt:P641 ?sport .
+        ?sport rdfs:label ?sportLabel .
+        FILTER(LANG(?sportLabel) = "en")
+      }
+      GROUP BY ?sport ?sportLabel
+      ORDER BY DESC(?count)
+      LIMIT 20
+
+  - question: "Where was the 2008 Summer Olympics hosted?"
+    tag: "Lookup"
+    sparql: |
+      SELECT DISTINCT ?hostCity ?hostCityLabel WHERE {
+        ?olympics wdt:P31 wd:Q159940 .
+        ?olympics wdt:P585 ?date .
+        FILTER(YEAR(?date) = 2008)
+        ?olympics wdt:P276 ?hostCity .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "Where was Lionel Messi born?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?birthPlace ?birthPlaceLabel WHERE {
+        ?player rdfs:label "Lionel Messi"@en .
+        ?player wdt:P31 wd:Q5 .
+        ?player wdt:P19 ?birthPlace .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "Which club does Kylian Mbappé play for?"
+    tag: "Lookup"
+    sparql: |
+      SELECT ?team ?teamLabel WHERE {
+        ?player rdfs:label "Kylian Mbappé"@en .
+        ?player wdt:P31 wd:Q5 .
+        ?player wdt:P54 ?team .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+      }
+
+  - question: "List football players from Brazil"
+    tag: "Filter"
+    sparql: |
+      SELECT ?player ?playerLabel WHERE {
+        ?player wdt:P31 wd:Q5 .
+        ?player wdt:P106 wd:Q937857 .
+        ?player wdt:P27 wd:Q155 .
+        ?player rdfs:label ?playerLabel .
+        FILTER(LANG(?playerLabel) = "en")
+      }
+      ORDER BY ?player
+      LIMIT 20
+
+example_questions:
+  - question: "List 10 football players"
+    tag: "Simple"
+  - question: "List 10 tennis players"
+    tag: "Simple"
+  - question: "List 10 basketball players"
+    tag: "Simple"
+  - question: "List hockey players from Geneva"
+    tag: "Filter"
+  - question: "List hockey players from Turkey"
+    tag: "Filter"
+  - question: "Find 10 archers from Turkey"
+    tag: "Filter"
+  - question: "Where was the 2008 Summer Olympics hosted?"
+    tag: "Lookup"
+  - question: "Who won the FIFA World Cup?"
+    tag: "Lookup"
+  - question: "List players who were members of FC Barcelona"
+    tag: "Lookup"
+  - question: "List players who were members of Real Madrid"
+    tag: "Lookup"
+  - question: "List football clubs in the English Premier League"
+    tag: "Lookup"
+  - question: "List tennis players from the United States"
+    tag: "Filter"
+  - question: "List basketball players born after 1990"
+    tag: "Filter"
+  - question: "List Olympic gold medalists in athletics"
+    tag: "Join"
+  - question: "Count athletes by sport"
+    tag: "Aggregate"
