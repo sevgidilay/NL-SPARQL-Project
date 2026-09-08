@@ -1,4 +1,4 @@
-Bidirectional Translation Between Natural Language and SPARQL
+## Bidirectional Translation Between Natural Language and SPARQL
 
 This project builds a prototype that converts natural language to SPARQL queries and SPARQL queries back to natural language, with a focus on feasibility and prompt-engineering strategies.
 
