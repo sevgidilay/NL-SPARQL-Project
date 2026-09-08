@@ -1,6 +1,6 @@
-# Project Lamia
+Bidirectional Translation Between Natural Language and SPARQL
 
-This KOS course project builds a prototype that converts natural language to SPARQL queries and SPARQL queries back to natural language, with a focus on feasibility and prompt-engineering strategies.
+This project builds a prototype that converts natural language to SPARQL queries and SPARQL queries back to natural language, with a focus on feasibility and prompt-engineering strategies.
 
 ## Repository Setup
 
@@ -53,10 +53,4 @@ The sidebar lets you select:
 
 Create a new YAML file in `configs/`. Use `configs/dbpedia_movies.yaml` as a template. The app loads all `.yaml` files in that directory automatically — no code changes needed.
 
-## Group Members
 
-- Engin Samet Dede
-- Sevgi Dilay Demirci
-- Kamar El Morabit
-- Jumainah Khan
-- Saifudeen Hisham Kolikara Mahin
